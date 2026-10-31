@@ -1,41 +1,78 @@
-# 04_Central_Director — Central Product Strategy & Next-Gen Innovations
+# 04_Central_Director — TUM Sovereign AgentOS
 ## ฝ่ายบริหารผลิตภัณฑ์ส่วนกลาง (Central Director Team)
 
-> **คำขวัญ:** *"From Deep-Tech Engines to Turnkey User-Level Products"*  
-> **สถานะ:** Active Strategic Innovation Unit 🟢  
-> **ผู้รับผิดชอบหลัก:** Central Product Director & Innovation Architect  
+> **คำขวัญ:** *"From Deep-Tech Engines to Turnkey Sovereign Agentic AI"*  
+> **สถานะ:** Active Production Flagship 🟢  
+> **ผลิตภัณฑ์เรือธง:** **TUM Sovereign AgentOS** (The World's First Enterprise Sovereign Agentic Platform)  
 > **ขึ้นตรงต่อ:** ท่านประธานกรรมการบริหาร (Chairman Pasit) & สำนักประธานเจ้าหน้าที่บริหาร (CEO)
 
 ---
 
-## 1. ขอบเขตและภารกิจของทีม Director (Mandate & Mission)
+## 1. ผลิตภัณฑ์เรือธง: TUM Sovereign AgentOS
 
-ทีม Director คือหน่วยยุทธศาสตร์ส่วนกลางที่ทำหน้าที่แปลง Deep-Tech อันทรงพลังจากบริษัทย่อย ให้กลายเป็น **ผลิตภัณฑ์ในระดับ User Level** ที่สวยงาม ประณีต และตอบโจทย์ธุรกิจ:
+ต่อยอดจากความสำเร็จของเครื่องมือยุค Agentic Engineering อย่าง **Orca** (Agent Development Environment) และ **ECC** (Agentic Engineering Toolkit) ผนวกเข้ากับเทคโนโลยีอธิปไตยระดับลึก (Sovereign Deep-Tech) ของเครือ TUM Group สู่แพลตฟอร์มบริหารจัดการและควบคุมกองทัพปัญญาประดิษฐ์ระดับองค์กร:
 
-1. **New Product Incubation & Strategic Brainstorming:**
-   - ริเริ่ม ออกแบบ และสร้างสรรค์สถาปัตยกรรมผลิตภัณฑ์เรือธงชุดใหม่ (Next-Gen Flagship Products) ร่วมกับท่าน CEO
-2. **Product Graduation & Subsidiary Integration:**
-   - เมื่อสร้างและพิสูจน์ Product Concept จนพร้อมแล้ว จะส่งมอบ (Handover) ให้บริษัทย่อยที่รับผิดชอบโดยตรงนำไปดำเนินการต่อ เช่น **Executive Cyber Defense Console / Attack Map** ได้ส่งมอบบรรจุเข้าเป็น Web Console หลักของโปรเจกต์ **TUM-OpenSIEM** ภายใต้การดูแลของ `TUMSocs` เรียบร้อยแล้ว (ตามข้อสั่งการของ CEO เมื่อ 1 พฤศจิกายน 2026)
-3. **Cross-Company Product Experience & Sovereign Design System:**
-   - ควบคุมมาตรฐานความประณีตระดับ Pixel-Perfect ให้กับทุกผลิตภัณฑ์ของเครือ TUM Group
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       TUM SOVEREIGN AGENTOS ECOSYSTEM                       │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+        ┌──────────────────────────────┼──────────────────────────────┐
+        ▼                              ▼                              ▼
+┌──────────────────────┐    ┌──────────────────────┐    ┌──────────────────────┐
+│  TUM Agentic Studio  │    │ TUM Agentic Director │    │    TUM AgentGate     │
+│ (Visual Design HUD)  │    │ (Fleet Orchestration)│    │ (Sovereign Identity) │
+└──────────┬───────────┘    └──────────┬───────────┘    └──────────┬───────────┘
+           │                           │                           │
+           └───────────────────────────┼───────────────────────────┘
+                                       ▼
+                       ┌──────────────────────────────┐
+                       │    TUM AgentOps Sentinel     │
+                       │ (eBPF Telemetry & Sandboxing)│
+                       └──────────────────────────────┘
+```
+
+### 4 เสาหลักของแพลตฟอร์ม (The 4 Pillars):
+1. **🎨 TUM Agentic Studio (`agentos/`):** Visual Architecture Canvas วาดพิมพ์เขียวสถาปัตยกรรมแล้วแปลงเป็น Jira Epics และคำสั่งแจกจ่าย Agent ใน Orca Worktrees อัตโนมัติ
+2. **🕹️ TUM Agentic Director:** ระบบควบคุมกองทัพ AI Agent ควบคู่ทั้ง 5 โครงการ พร้อมกรอบวิศวกรรม ECC (*Plan $\rightarrow$ Eval $\rightarrow$ Code $\rightarrow$ Verify*)
+3. **🔐 TUM AgentGate:** ระบบออกบัตรตัวตนและมอบสิทธิ์ (Delegated Agent Credential) ผูกกับ DOPA Thai ID พร้อมลงลายมือชื่อดิจิทัลทนควอนตัม **NIST FIPS 204 ML-DSA**
+4. **🛡️ TUM AgentOps Sentinel:** เรดาร์วิเคราะห์พฤติกรรมความเสี่ยง (0-100) และระบบตัดตอนคำสั่งอันตราย (Prompt Injection / Malicious Shell) ในระดับเคอร์เนลด้วย eBPF จาก TUMSocs
 
 ---
 
-## 2. ประวัติการส่งมอบผลิตภัณฑ์ (Product Handover Record)
-
-- 📦 **TUM-OpenSIEM Web Console (Attack Map & Executive HUD):**  
-  ส่งมอบรหัสต้นฉบับ `visualizers/index.html` ไปยังคลัง `tum-socs` เพื่อผนวกรวมเป็น Native Web Console ของระบบ SIEM แบบเปิด พร้อมเอกสาร [CENTRAL_DIRECTOR_CONSOLE_HANDOVER.md](file:///D:/TUM/tum-socs/docs/CENTRAL_DIRECTOR_CONSOLE_HANDOVER.md) (1 พ.ย. 2026)
-
----
-
-## 3. โครงสร้างโฟลเดอร์ภายใน (Internal Architecture)
+## 2. โครงสร้างโฟลเดอร์ภายใน (Internal Architecture)
 
 ```
 04_Central_Director/
-├── visualizers/
-│   └── index.html               # Reference Executive HUD Visualizer (ส่งมอบให้ TUM-Socs แล้ว)
+├── agentos/
+│   └── index.html               # TUM Sovereign AgentOS — Interactive Single-Page Application
+├── bridge/
+│   └── agentos-bridge.ps1       # Local Orca CLI Runtime Bridge & Multi-Fleet Controller
 ├── docs/
-│   ├── TUM_DIRECTOR_TEAM_CHARTER.md # ธรรมนูญทีม Central Director
-│   └── GIT_FLOW.md              # มาตรฐานการจัดการ Git Flow ของทีม
+│   ├── TUM_SOVEREIGN_AGENTOS_BLUEPRINT.md # พิมพ์เขียวและข้อกำหนดสถาปัตยกรรมระบบ AgentOS
+│   ├── TUM_DIRECTOR_TEAM_CHARTER.md       # ธรรมนูญทีม Central Director
+│   └── GIT_FLOW.md                        # มาตรฐานการจัดการ Git Flow
+├── visualizers/
+│   └── index.html               # Reference Executive HUD (ส่งมอบให้ TUM-Socs เรียบร้อยแล้ว)
+├── index.html                   # Root Redirect ไปยัง agentos/index.html
 └── README.md                    # เอกสารภาพรวมทีม Central Director
+```
+
+---
+
+## 3. วิธีการเปิดใช้งาน (Quickstart)
+
+### เปิดใช้งานผ่าน Web Browser:
+เปิดไฟล์ [agentos/index.html](file:///D:/TUM/tum-central-director/agentos/index.html) ในเบราว์เซอร์ เพื่อเข้าสู่หน้าจอ **War Room HUD, Studio Canvas, Fleet Director, AgentGate, และ Sentinel Defense** ได้ทันทีโดยไม่ต้องติดตั้งเซิร์ฟเวอร์ภายนอก
+
+### เชื่อมต่อกับ Orca Runtime บนเครื่อง:
+```powershell
+# ตรวจสอบสถานะการเชื่อมต่อกับ Orca Worktrees
+powershell -ExecutionPolicy Bypass -File bridge/agentos-bridge.ps1 -Action status
+
+# ดูรายการ Terminal ของ Agent ทั้งหมดที่กำลังรันอยู่ใน Orca
+powershell -ExecutionPolicy Bypass -File bridge/agentos-bridge.ps1 -Action list-terminals
+
+# สั่งรันชุดทดสอบความปลอดภัยและการทำงานของระบบทั้งหมด
+powershell -ExecutionPolicy Bypass -File bridge/agentos-bridge.ps1 -Action eval
 ```
