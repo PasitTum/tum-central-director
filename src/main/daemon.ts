@@ -14,6 +14,7 @@ import { ProcessRunner } from './process-runner.js';
 import { SentinelInterceptor } from './sentinel.js';
 import { AgentGateEngine } from './agentgate.js';
 import { PlatformAdapter } from './platform.js';
+import { FleetMeshHub } from './fleet-mesh-hub.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -277,6 +278,24 @@ export function createDaemonServer(): http.Server {
         return sendJson(res, 200, {
           reply: aiReply,
           verdict
+        });
+      }
+
+      // 11. ENTERPRISE FLEET MESH OVERVIEW & TELEMETRY
+      if (pathname === '/api/fleet/overview' && req.method === 'GET') {
+        const overview = await FleetMeshHub.getFleetOverview();
+        return sendJson(res, 200, overview);
+      }
+
+      // 12. FLEET HEALTH PING
+      if (pathname === '/api/fleet/health' && req.method === 'GET') {
+        const overview = await FleetMeshHub.getFleetOverview();
+        return sendJson(res, 200, {
+          status: overview.allQualityGatesPassed ? 'HEALTHY' : 'DEGRADED',
+          totalAutomatedTests: overview.totalAutomatedTests,
+          productsCount: overview.fleetCount,
+          quantumStandard: overview.activeQuantumStandard,
+          timestamp: overview.generatedAt
         });
       }
 
