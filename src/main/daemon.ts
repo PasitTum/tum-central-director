@@ -15,6 +15,10 @@ import { SentinelInterceptor } from './sentinel.js';
 import { AgentGateEngine } from './agentgate.js';
 import { PlatformAdapter } from './platform.js';
 import { FleetMeshHub } from './fleet-mesh-hub.js';
+import { TenantManager } from './tenant-manager.js';
+import { ReportGenerator } from './report-generator.js';
+import { AlertEngine } from './alert-engine.js';
+import { PlaybookOrchestrator } from './playbook-orchestrator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -189,6 +193,15 @@ export function createDaemonServer(): http.Server {
         // Real Sentinel Inspection
         const verdict = SentinelInterceptor.inspect(command, 'ide_user', targetCwd);
         if (!verdict.allowed) {
+          AlertEngine.evaluateEvent({
+            timestamp: new Date().toISOString(),
+            verdict: verdict.action,
+            threatCategory: verdict.threatCategory,
+            riskScore: verdict.riskScore,
+            detail: `Terminal execution blocked: ${command}`,
+            attribution: verdict.attribution
+          }).catch(() => {});
+
           return sendJson(res, 200, {
             allowed: false,
             verdict,
@@ -253,6 +266,15 @@ export function createDaemonServer(): http.Server {
         // 1. Check with Sentinel for prompt injection
         const verdict = SentinelInterceptor.inspect(promptText, 'copilot_user', targetCwd);
         if (!verdict.allowed) {
+          AlertEngine.evaluateEvent({
+            timestamp: new Date().toISOString(),
+            verdict: verdict.action,
+            threatCategory: verdict.threatCategory,
+            riskScore: verdict.riskScore,
+            detail: `Copilot prompt injection blocked: ${promptText}`,
+            attribution: verdict.attribution
+          }).catch(() => {});
+
           return sendJson(res, 200, {
             reply: `🚨 [BLOCKED BY SENTINEL]: Your prompt was flagged as ${verdict.threatCategory} (Risk Score: ${verdict.riskScore}/100 - ${verdict.matchedRule}). Action: ${verdict.action}.`,
             verdict
@@ -307,6 +329,96 @@ export function createDaemonServer(): http.Server {
           quantumStandard: overview.activeQuantumStandard,
           timestamp: overview.generatedAt
         });
+      }
+
+      // 13. MULTI-TENANT REGISTRY
+      if (pathname === '/api/tenants/list' && req.method === 'GET') {
+        const tenants = TenantManager.listTenants();
+        return sendJson(res, 200, { tenants });
+      }
+
+      // 14. ONE-CLICK EXECUTIVE AUDIT REPORT (HTML, CSV, JSON)
+      if (pathname === '/api/reports/executive' && req.method === 'GET') {
+        const tenantId = url.searchParams.get('tenant') || 'tum-holdings';
+        const format = (url.searchParams.get('format') || 'html') as 'html' | 'csv' | 'json';
+        const report = await ReportGenerator.generateReport({ tenantId, format });
+
+        if (format === 'html') {
+          res.writeHead(200, {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(report.content);
+          return;
+        } else if (format === 'csv') {
+          res.writeHead(200, {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': `attachment; filename="tum-executive-audit-${tenantId}.csv"`,
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(report.content);
+          return;
+        } else {
+          return sendJson(res, 200, report);
+        }
+      }
+
+      // 15. CONFIGURE ALERT THRESHOLDS & WEBHOOKS
+      if (pathname === '/api/alerts/configure' && req.method === 'POST') {
+        const body = await parseBody(req);
+        const tenantId = body.tenantId || 'tum-holdings';
+        const updated = AlertEngine.configureAlerts(tenantId, body);
+        return sendJson(res, 200, { success: true, config: updated });
+      }
+
+      // 16. TEST WEBHOOK DISPATCH
+      if (pathname === '/api/alerts/test' && req.method === 'POST') {
+        const body = await parseBody(req);
+        const tenantId = body.tenantId || 'tum-holdings';
+        const channel = body.channel || 'discord';
+        const dispatchLog = await AlertEngine.testWebhook(tenantId, channel);
+        return sendJson(res, 200, { success: true, dispatch: dispatchLog });
+      }
+
+      // 17. ALERT DISPATCH HISTORY
+      if (pathname === '/api/alerts/history' && req.method === 'GET') {
+        const limit = parseInt(url.searchParams.get('limit') || '30', 10);
+        const history = AlertEngine.getDispatchHistory(limit);
+        return sendJson(res, 200, { history });
+      }
+
+      // 18. GET ALERT CONFIGURATION
+      if (pathname === '/api/alerts/config' && req.method === 'GET') {
+        const tenantId = url.searchParams.get('tenant') || 'tum-holdings';
+        const config = AlertEngine.getAlertConfig(tenantId);
+        return sendJson(res, 200, { config });
+      }
+
+      // 19. INCIDENT RESPONSE PLAYBOOKS CATALOG
+      if (pathname === '/api/playbooks' && req.method === 'GET') {
+        const playbooks = PlaybookOrchestrator.getPlaybooks();
+        return sendJson(res, 200, { playbooks });
+      }
+
+      // 20. TRIGGER PLAYBOOK EXECUTION
+      if (pathname === '/api/playbooks/execute' && req.method === 'POST') {
+        const body = await parseBody(req);
+        if (!body.playbookId) {
+          return sendJson(res, 400, { error: 'playbookId is required' });
+        }
+        const execution = await PlaybookOrchestrator.executePlaybook(
+          body.playbookId,
+          body.parameters || {},
+          body.triggeredBy || 'CEO_EXECUTIVE_CONSOLE'
+        );
+        return sendJson(res, 200, { success: true, execution });
+      }
+
+      // 21. PLAYBOOK EXECUTION HISTORY
+      if (pathname === '/api/playbooks/history' && req.method === 'GET') {
+        const limit = parseInt(url.searchParams.get('limit') || '50', 10);
+        const history = PlaybookOrchestrator.getExecutionHistory(limit);
+        return sendJson(res, 200, { history });
       }
 
       sendJson(res, 404, { error: `Endpoint not found: ${pathname}` });

@@ -290,6 +290,9 @@
         </div>
 
         <div class="titlebar-actions">
+            <button class="btn-mini btn-secondary" onclick="selectSidebarTab('reports')" title="Executive Audit Reports & Multi-Tenant Alerts" style="display: flex; align-items: center; gap: 5px;">
+                <span>📊</span> Reports & Alerts
+            </button>
             <button class="btn-mini btn-secondary" onclick="openFolderPrompt()" title="Open any folder on this PC (Ctrl+O)" style="display: flex; align-items: center; gap: 5px;">
                 <span>📂</span> Open Folder...
             </button>
@@ -319,6 +322,7 @@
             <button class="activity-btn" title="Git Worktree Fleet" onclick="selectSidebarTab('fleet')">🌿</button>
             <button class="activity-btn" title="Sentinel Threat Radar" onclick="selectSidebarTab('sentinel')">🛡️</button>
             <button class="activity-btn" title="AgentGate DAC Tokens" onclick="selectSidebarTab('agentgate')">🔐</button>
+            <button class="activity-btn" title="Executive Reports & Alerts" onclick="selectSidebarTab('reports')">📊</button>
         </div>
 
         <!-- SIDEBAR -->
@@ -933,6 +937,61 @@ Type any PowerShell/Bash command below:</div>
                         </div>
                     </div>
                 `;
+            } else if (tab === 'reports') {
+                title.textContent = 'Executive Reports & Alerts';
+                content.innerHTML = `
+                    <div style="padding: 12px; font-size: 11px; font-family: var(--font-code);">
+                        <!-- Tenant Selector -->
+                        <div style="margin-bottom: 12px;">
+                            <label style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">🏢 Tenant Boundary:</label>
+                            <select id="selReportTenant" onchange="loadTenantReportData()" style="width: 100%; background: #04060b; color: #38bdf8; border: 1px solid var(--border); border-radius: 4px; padding: 6px; font-size: 11px; margin-top: 4px;">
+                                <option value="tum-holdings">TUM Group Holdings (Global)</option>
+                                <option value="tum-trust">TUM Trust Security</option>
+                                <option value="tum-socs">TUM Socs & CyberMesh</option>
+                                <option value="tum-quantum">TUM Quantum & PQC</option>
+                                <option value="enterprise-client-alpha">Enterprise Client Alpha</option>
+                            </select>
+                        </div>
+
+                        <!-- One-Click Export Actions -->
+                        <div style="background: #04060b; border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-bottom: 12px;">
+                            <div style="color: #fff; font-weight: 700; margin-bottom: 6px;">📄 1-Click Executive Export</div>
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <button class="btn-mini" style="width: 100%;" onclick="exportExecutiveReport('html')">🖨️ View & Print PDF Report</button>
+                                <button class="btn-mini btn-secondary" style="width: 100%;" onclick="exportExecutiveReport('csv')">📊 Export Excel/CSV Audit Log</button>
+                                <button class="btn-mini btn-secondary" style="width: 100%;" onclick="exportExecutiveReport('json')">💾 Download JSON Manifest</button>
+                            </div>
+                        </div>
+
+                        <!-- Alert Thresholds & Webhook -->
+                        <div style="background: #04060b; border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-bottom: 12px;">
+                            <div style="color: #fff; font-weight: 700; margin-bottom: 6px;">🚨 Real-Time Alert Thresholds</div>
+                            <div style="margin-bottom: 8px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-dim);">
+                                    <span>Risk Score Trigger:</span>
+                                    <strong id="lblRiskThreshold" style="color: var(--amber);">70 / 100</strong>
+                                </div>
+                                <input type="range" id="rngRiskThreshold" min="20" max="100" value="70" style="width: 100%; margin-top: 4px;" oninput="updateRiskThresholdLabel(this.value)">
+                            </div>
+                            <div style="margin-bottom: 8px;">
+                                <label style="font-size: 10px; color: var(--text-dim);">Discord / SIEM Webhook:</label>
+                                <input type="text" id="txtAlertWebhook" placeholder="https://discord.com/api/webhooks/..." value="https://discord.com/api/webhooks/mock/central-director-alerts" style="width: 100%; background: #090c17; border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; color: #fff; font-size: 10px; margin-top: 3px;">
+                            </div>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="btn-mini btn-secondary" style="flex: 1;" onclick="saveAlertConfig()">💾 Save Config</button>
+                                <button class="btn-mini" style="flex: 1; background: linear-gradient(135deg, #059669, #047857);" onclick="triggerTestAlert()">⚡ Test Dispatch</button>
+                            </div>
+                        </div>
+
+                        <!-- Recent Alert History -->
+                        <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase; margin-bottom: 6px;">Recent Dispatched Alerts:</div>
+                        <div id="alertHistoryList" style="max-height: 140px; overflow-y: auto; font-size: 10px; font-family: var(--font-code);">
+                            <div style="color: var(--text-dim); padding: 4px;">Loading alert stream...</div>
+                        </div>
+                    </div>
+                `;
+                loadTenantReportData();
+                loadAlertHistory();
             } else {
                 title.textContent = 'Explorer: tum-central-director';
                 loadRealFileTree();
@@ -1087,6 +1146,201 @@ Type any PowerShell/Bash command below:</div>
             }
             chat.scrollTop = chat.scrollHeight;
         }
+
+        // EXECUTIVE REPORTS & ALERTING HELPERS
+        function updateRiskThresholdLabel(val) {
+            const lbl = document.getElementById('lblRiskThreshold');
+            if (lbl) lbl.textContent = `${val} / 100`;
+        }
+
+        async function loadTenantReportData() {
+            const tenant = document.getElementById('selReportTenant')?.value || 'tum-holdings';
+            try {
+                let data;
+                if (isNative) {
+                    data = await window.tumAPI.getAlertConfig(tenant);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/alerts/config?tenant=${tenant}`);
+                    data = await res.json();
+                }
+                if (data && data.config) {
+                    const rng = document.getElementById('rngRiskThreshold');
+                    const lbl = document.getElementById('lblRiskThreshold');
+                    const txt = document.getElementById('txtAlertWebhook');
+                    if (rng) rng.value = data.config.riskThreshold;
+                    if (lbl) lbl.textContent = `${data.config.riskThreshold} / 100`;
+                    if (txt && data.config.webhookUrls?.discord) {
+                        txt.value = data.config.webhookUrls.discord;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load alert config:', err);
+            }
+        }
+
+        async function saveAlertConfig() {
+            const tenant = document.getElementById('selReportTenant')?.value || 'tum-holdings';
+            const risk = parseInt(document.getElementById('rngRiskThreshold')?.value || '70', 10);
+            const webhook = document.getElementById('txtAlertWebhook')?.value || '';
+
+            try {
+                let data;
+                const configPayload = {
+                    tenantId: tenant,
+                    riskThreshold: risk,
+                    webhookUrls: { discord: webhook }
+                };
+                if (isNative) {
+                    data = await window.tumAPI.configureAlerts(tenant, configPayload);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/alerts/configure`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(configPayload)
+                    });
+                    data = await res.json();
+                }
+                if (data.success) {
+                    showToast(`✓ Alert config saved for ${tenant}`);
+                }
+            } catch (err) {
+                alert('Save config error: ' + err.message);
+            }
+        }
+
+        async function triggerTestAlert() {
+            const tenant = document.getElementById('selReportTenant')?.value || 'tum-holdings';
+            try {
+                let data;
+                if (isNative) {
+                    data = await window.tumAPI.testAlert(tenant, 'discord');
+                } else {
+                    const res = await fetch(`${API_BASE}/api/alerts/test`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tenantId: tenant, channel: 'discord' })
+                    });
+                    data = await res.json();
+                }
+                if (data.success) {
+                    showToast(`⚡ Test alert dispatched (HTTP ${data.dispatch.statusCode})`);
+                    loadAlertHistory();
+                }
+            } catch (err) {
+                alert('Test dispatch error: ' + err.message);
+            }
+        }
+
+        async function loadAlertHistory() {
+            const container = document.getElementById('alertHistoryList');
+            if (!container) return;
+            try {
+                let data;
+                if (isNative) {
+                    data = await window.tumAPI.getAlertHistory(15);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/alerts/history?limit=15`);
+                    data = await res.json();
+                }
+                if (data.history && data.history.length > 0) {
+                    container.innerHTML = data.history.map(h => `
+                        <div style="margin-bottom: 6px; padding: 4px 6px; background: rgba(255,255,255,0.03); border-radius: 4px; border-left: 2px solid ${h.delivered ? 'var(--emerald)' : 'var(--rose)'};">
+                            <div style="color: #fff; font-weight: 700;">[${h.channel.toUpperCase()}] ${h.delivered ? 'DELIVERED' : 'FAILED'} (HTTP ${h.statusCode})</div>
+                            <div style="color: var(--text-dim); font-size: 9px;">${h.timestamp.substring(11, 19)} | Score: ${h.riskScore}</div>
+                            <div style="color: var(--text-muted); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${h.triggerReason}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div style="color: var(--text-dim); padding: 4px;">No alerts dispatched yet.</div>';
+                }
+            } catch (err) {
+                container.innerHTML = '<div style="color: var(--rose); padding: 4px;">Failed to load alerts.</div>';
+            }
+        }
+
+        async function exportExecutiveReport(format) {
+            const tenant = document.getElementById('selReportTenant')?.value || 'tum-holdings';
+            showToast(`Generating ${format.toUpperCase()} report for ${tenant}...`);
+
+            try {
+                let report;
+                if (isNative) {
+                    report = await window.tumAPI.generateReport({ tenantId: tenant, format });
+                } else {
+                    const res = await fetch(`${API_BASE}/api/reports/executive?tenant=${tenant}&format=${format}`);
+                    if (format === 'html') {
+                        const htmlText = await res.text();
+                        report = { content: htmlText, format: 'html' };
+                    } else if (format === 'csv') {
+                        const csvText = await res.text();
+                        report = { content: csvText, format: 'csv' };
+                    } else {
+                        report = await res.json();
+                    }
+                }
+
+                if (format === 'html') {
+                    openReportModal(report.content);
+                } else if (format === 'csv') {
+                    downloadFile(`tum-executive-audit-${tenant}.csv`, report.content, 'text/csv;charset=utf-8;');
+                    showToast(`✓ Exported CSV Audit Log`);
+                } else if (format === 'json') {
+                    const jsonStr = typeof report.content === 'string' ? report.content : JSON.stringify(report, null, 2);
+                    downloadFile(`tum-audit-manifest-${tenant}.json`, jsonStr, 'application/json');
+                    showToast(`✓ Downloaded JSON Manifest`);
+                }
+            } catch (err) {
+                alert('Report export error: ' + err.message);
+            }
+        }
+
+        function downloadFile(filename, content, type) {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function openReportModal(htmlContent) {
+            const modal = document.getElementById('reportModal');
+            const frame = document.getElementById('reportFrame');
+            if (modal && frame) {
+                modal.style.display = 'flex';
+                frame.srcdoc = htmlContent;
+            }
+        }
+
+        function closeReportModal() {
+            const modal = document.getElementById('reportModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function printReportFrame() {
+            const frame = document.getElementById('reportFrame');
+            if (frame && frame.contentWindow) {
+                frame.contentWindow.focus();
+                frame.contentWindow.print();
+            }
+        }
     </script>
+
+    <!-- EXECUTIVE REPORT PREVIEW MODAL -->
+    <div id="reportModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; flex-direction: column; padding: 24px; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #0c101d; padding: 12px 20px; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="font-weight: 800; font-size: 14px; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span>🏛️</span> TUM Executive Security & Compliance Audit Report
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn-mini" onclick="printReportFrame()">🖨️ Print / Save as PDF</button>
+                <button class="btn-mini btn-secondary" onclick="closeReportModal()">✕ Close</button>
+            </div>
+        </div>
+        <iframe id="reportFrame" style="flex: 1; width: 100%; border: 1px solid var(--border); border-radius: 8px; background: #060810;"></iframe>
+    </div>
 </body>
 </html>

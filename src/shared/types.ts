@@ -81,15 +81,21 @@ export interface SecurityVerdict {
 }
 
 export interface AuditEvent {
-  id: string;
+  id?: string;
   timestamp: string;
-  agentId: string;
-  worktree: string;
-  actionType: 'WORKTREE_OP' | 'COMMAND_EXECUTION' | 'DAC_MINT' | 'DAC_REVOKE' | 'THREAT_BLOCKED';
+  agentId?: string;
+  worktree?: string;
+  actionType?: 'WORKTREE_OP' | 'COMMAND_EXECUTION' | 'DAC_MINT' | 'DAC_REVOKE' | 'THREAT_BLOCKED';
   detail: string;
   riskScore: number;
   verdict: string;
+  threatCategory?: string;
+  attribution?: {
+    reason: string;
+  };
 }
+
+export type AuditLogEntry = AuditEvent;
 
 export interface StudioNode {
   id: string;

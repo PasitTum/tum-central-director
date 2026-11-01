@@ -5,7 +5,9 @@
  */
 
 import crypto from 'crypto';
-import { SecurityVerdict, ThreatCategory, SecurityMitigationAction, AuditEvent } from '../shared/types.js';
+import type { SecurityVerdict, ThreatCategory, SecurityMitigationAction, AuditEvent, AuditLogEntry } from '../shared/types.js';
+
+export type { AuditEvent, AuditLogEntry };
 
 interface SecurityRule {
   pattern: RegExp;
