@@ -26,7 +26,10 @@ const DEFAULT_REPOS = [
   { id: 'trust', name: 'tum-trust-security', path: 'D:/TUM/tum-trust-security' },
   { id: 'socs', name: 'tum-socs', path: 'D:/TUM/tum-socs' },
   { id: 'quantum', name: 'tum-quantum', path: 'D:/TUM/tum-quantum' },
-  { id: 'holdings', name: 'tum-group-holdings', path: 'D:/TUM/tum-group-holdings' }
+  { id: 'holdings', name: 'tum-group-holdings', path: 'D:/TUM/tum-group-holdings' },
+  { id: 'workos', name: 'tum-agentic-workos', path: 'D:/TUM/tum-agentic-workos' },
+  { id: 'cybermesh', name: 'tum-cybermesh', path: 'D:/TUM/tum-cybermesh' },
+  { id: 'trustfabric', name: 'tum-trust-fabric', path: 'D:/TUM/tum-trust-fabric' }
 ];
 
 function sendJson(res: http.ServerResponse, statusCode: number, data: any) {
