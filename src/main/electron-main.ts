@@ -54,7 +54,7 @@ const DEFAULT_REPOS = [
 
 let mainWindow: BrowserWindow | null = null;
 
-async function scanDirectory(dir: string, depth = 3): Promise<any[]> {
+async function scanDirectory(dir: string, depth = 6): Promise<any[]> {
   if (depth < 0) return [];
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -64,22 +64,32 @@ async function scanDirectory(dir: string, depth = 3): Promise<any[]> {
         continue;
       }
       const fullPath = PlatformAdapter.normalizePath(path.join(dir, entry.name));
-      if (entry.isDirectory()) {
-        result.push({
-          name: entry.name,
-          path: fullPath,
-          type: 'directory',
-          children: await scanDirectory(fullPath, depth - 1)
-        });
-      } else {
-        result.push({
-          name: entry.name,
-          path: fullPath,
-          type: 'file',
-          size: (await fs.stat(fullPath)).size
-        });
-      }
+      try {
+        if (entry.isDirectory()) {
+          result.push({
+            name: entry.name,
+            path: fullPath,
+            type: 'directory',
+            children: await scanDirectory(fullPath, depth - 1)
+          });
+        } else {
+          let size = 0;
+          try {
+            size = (await fs.stat(fullPath)).size;
+          } catch {}
+          result.push({
+            name: entry.name,
+            path: fullPath,
+            type: 'file',
+            size
+          });
+        }
+      } catch {}
     }
+    result.sort((a, b) => {
+      if (a.type === b.type) return a.name.localeCompare(b.name);
+      return a.type === 'directory' ? -1 : 1;
+    });
     return result;
   } catch (err) {
     return [];
@@ -218,7 +228,7 @@ function setupIpcHandlers() {
   // 1. REAL FILE SYSTEM TREE
   ipcMain.handle('fs:tree', async (_, dir) => {
     const targetDir = dir || process.cwd();
-    const tree = await scanDirectory(targetDir, 3);
+    const tree = await scanDirectory(targetDir, 6);
     return { dir: PlatformAdapter.normalizePath(targetDir), tree };
   });
 

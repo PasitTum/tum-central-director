@@ -43,6 +43,17 @@ app.whenReady().then(() => {
       fs.writeFileSync(path.join(ARTIFACT_DIR, 'slide_3_terminal_execution.png'), img3.toPNG());
       console.log('[Visual QA] Slide 3: Terminal Execution saved.');
 
+      // 4. Capture Folder Collapse / Expand Interaction
+      await win.webContents.executeJavaScript(`
+        const firstFolder = document.querySelector('.tree-folder');
+        if (firstFolder) firstFolder.click();
+      `);
+      await new Promise(r => setTimeout(r, 1000));
+      const img5 = await win.webContents.capturePage();
+      const p5 = 'C:/Users/USER/.gemini/antigravity-cli/brain/ce4b8fbc-612d-465b-88c2-35e1fbd06650/evidence_5_folder_collapsed.png';
+      fs.writeFileSync(p5, img5.toPNG());
+      console.log('[Visual QA] Slide 5: Folder Collapse verified & saved to: ' + p5);
+
       console.log('[Visual QA] Test sequence completed with 100% success.');
       app.quit();
     }

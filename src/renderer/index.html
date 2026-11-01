@@ -110,10 +110,22 @@
             display: flex; justify-content: space-between; align-items: center;
         }
         .sidebar-content { flex: 1; overflow-y: auto; padding: 8px 0; }
-        .tree-folder { padding: 4px 14px; font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; }
+        .tree-folder {
+            padding: 5px 12px; font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;
+            cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s; user-select: none;
+            border-radius: 4px; margin: 1px 4px;
+        }
+        .tree-folder:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.05); }
+        .folder-arrow {
+            font-size: 9px; display: inline-block; width: 12px; text-align: center; color: var(--text-muted);
+            transition: transform 0.15s ease;
+        }
+        .folder-children { transition: all 0.2s ease; }
+        .folder-children.collapsed { display: none !important; }
         .tree-item {
             padding: 5px 14px 5px 24px; font-size: 12px; font-family: var(--font-code); color: var(--text-muted);
             display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            user-select: none; margin: 1px 4px; border-radius: 4px;
         }
         .tree-item:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.04); }
         .tree-item.active { color: var(--primary); background: rgba(56, 189, 248, 0.1); font-weight: 600; border-left: 2px solid var(--primary); }
@@ -308,6 +320,7 @@
             <div class="sidebar-header">
                 <span id="sidebarHeaderTitle">Explorer: tum-central-director</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
+                    <span style="cursor: pointer; font-size: 11px;" title="Collapse All Folders" onclick="collapseAllFolders()">▼/▶</span>
                     <span style="cursor: pointer; font-size: 13px;" title="Open Folder..." onclick="openFolderPrompt()">📂</span>
                     <span style="cursor: pointer; font-size: 13px;" title="Refresh" onclick="loadRealFileTree()">🔄</span>
                 </div>
@@ -601,26 +614,70 @@ Type any PowerShell/Bash command below:</div>
                     if (item.type === 'directory') {
                         const folderEl = document.createElement('div');
                         folderEl.className = 'tree-folder';
-                        folderEl.style.paddingLeft = `${12 + level * 12}px`;
-                        folderEl.innerHTML = `▼ ${item.name}`;
+                        folderEl.style.paddingLeft = `${10 + level * 14}px`;
+
+                        const arrow = document.createElement('span');
+                        arrow.className = 'folder-arrow';
+                        arrow.textContent = '▼';
+
+                        const icon = document.createElement('span');
+                        icon.textContent = '📁 ';
+
+                        const label = document.createElement('span');
+                        label.textContent = item.name;
+
+                        folderEl.appendChild(arrow);
+                        folderEl.appendChild(icon);
+                        folderEl.appendChild(label);
                         parentEl.appendChild(folderEl);
 
                         const childContainer = document.createElement('div');
+                        childContainer.className = 'folder-children';
                         parentEl.appendChild(childContainer);
-                        if (item.children) walk(item.children, childContainer, level + 1);
+
+                        // Click to collapse / expand folder
+                        folderEl.onclick = (e) => {
+                            e.stopPropagation();
+                            const isCollapsed = childContainer.classList.toggle('collapsed');
+                            arrow.textContent = isCollapsed ? '▶' : '▼';
+                            icon.textContent = isCollapsed ? '📁 ' : '📂 ';
+                        };
+
+                        if (item.children) {
+                            walk(item.children, childContainer, level + 1);
+                        }
                     } else {
                         const fileEl = document.createElement('div');
                         fileEl.className = 'tree-item';
-                        fileEl.style.paddingLeft = `${20 + level * 12}px`;
+                        fileEl.style.paddingLeft = `${24 + level * 14}px`;
                         fileEl.title = item.path;
                         fileEl.innerHTML = `📄 ${item.name}`;
-                        fileEl.onclick = () => readRealFile(item.path);
+                        fileEl.onclick = (e) => {
+                            e.stopPropagation();
+                            document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+                            fileEl.classList.add('active');
+                            readRealFile(item.path);
+                        };
                         parentEl.appendChild(fileEl);
                     }
                 }
             }
 
             walk(tree, container);
+        }
+
+        // TOGGLE COLLAPSE / EXPAND ALL FOLDERS
+        let allCollapsed = false;
+        function collapseAllFolders() {
+            allCollapsed = !allCollapsed;
+            document.querySelectorAll('.folder-children').forEach(el => {
+                if (allCollapsed) el.classList.add('collapsed');
+                else el.classList.remove('collapsed');
+            });
+            document.querySelectorAll('.folder-arrow').forEach(el => {
+                el.textContent = allCollapsed ? '▶' : '▼';
+            });
+            showToast(allCollapsed ? '📁 All folders collapsed' : '📂 All folders expanded');
         }
 
         // REAL FILE READ (NATIVE IPC + HTTP FALLBACK)
