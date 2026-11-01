@@ -61,7 +61,7 @@ function parseBody(req: http.IncomingMessage): Promise<any> {
 /**
  * Scan directory recursively up to a given depth
  */
-async function scanDirectory(dir: string, depth = 3): Promise<any[]> {
+async function scanDirectory(dir: string, depth = 6): Promise<any[]> {
   if (depth < 0) return [];
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -71,22 +71,32 @@ async function scanDirectory(dir: string, depth = 3): Promise<any[]> {
         continue;
       }
       const fullPath = PlatformAdapter.normalizePath(path.join(dir, entry.name));
-      if (entry.isDirectory()) {
-        result.push({
-          name: entry.name,
-          path: fullPath,
-          type: 'directory',
-          children: await scanDirectory(fullPath, depth - 1)
-        });
-      } else {
-        result.push({
-          name: entry.name,
-          path: fullPath,
-          type: 'file',
-          size: (await fs.stat(fullPath)).size
-        });
-      }
+      try {
+        if (entry.isDirectory()) {
+          result.push({
+            name: entry.name,
+            path: fullPath,
+            type: 'directory',
+            children: await scanDirectory(fullPath, depth - 1)
+          });
+        } else {
+          let size = 0;
+          try {
+            size = (await fs.stat(fullPath)).size;
+          } catch {}
+          result.push({
+            name: entry.name,
+            path: fullPath,
+            type: 'file',
+            size
+          });
+        }
+      } catch {}
     }
+    result.sort((a, b) => {
+      if (a.type === b.type) return a.name.localeCompare(b.name);
+      return a.type === 'directory' ? -1 : 1;
+    });
     return result;
   } catch (err) {
     return [];
@@ -134,7 +144,7 @@ export function createDaemonServer(): http.Server {
       // 2. REAL FILE SYSTEM TREE
       if (pathname === '/api/fs/tree' && req.method === 'GET') {
         const targetDir = url.searchParams.get('dir') || process.cwd();
-        const tree = await scanDirectory(targetDir, 3);
+        const tree = await scanDirectory(targetDir, 6);
         return sendJson(res, 200, { dir: PlatformAdapter.normalizePath(targetDir), tree });
       }
 
