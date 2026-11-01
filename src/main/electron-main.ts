@@ -18,6 +18,29 @@ import { startDaemon } from './daemon.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Configure Application Identity & Dedicated User Data Path
+app.name = 'tum-sovereign-agent-ide';
+try {
+  const userDataDir = path.join(app.getPath('appData'), 'tum-sovereign-agent-ide');
+  app.setPath('userData', userDataDir);
+} catch {}
+
+// Prevent GPU disk cache lock issues on Windows
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+
+// Single Instance Lock: prevent lock collisions & bring existing window to front
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
+
 const DEFAULT_REPOS = [
   { id: 'director', name: 'tum-central-director', path: 'D:/TUM/tum-central-director' },
   { id: 'trust', name: 'tum-trust-security', path: 'D:/TUM/tum-trust-security' },
