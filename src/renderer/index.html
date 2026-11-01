@@ -457,10 +457,41 @@ Type any PowerShell/Bash command below:</div>
             }
         });
 
+        let currentTreeCache = [];
+
+        function findPrimaryFile(items) {
+            if (!items) return null;
+            const priorities = ['readme.md', 'package.json', 'index.html', 'index.ts', 'index.js', 'main.py', 'app.py', 'cargo.toml'];
+            for (const item of items) {
+                if (item.type === 'file' && priorities.includes(item.name.toLowerCase())) {
+                    return item;
+                }
+            }
+            for (const item of items) {
+                if (item.children) {
+                    const found = findPrimaryFile(item.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        function findFirstFile(items) {
+            if (!items) return null;
+            for (const item of items) {
+                if (item.type === 'file') return item;
+                if (item.children) {
+                    const found = findFirstFile(item.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
         // OPEN FOLDER PROMPT (NATIVE DIALOG / WEB FALLBACK)
         async function openFolderPrompt() {
             let selected = null;
-            if (isNative && window.tumAPI.openFolderDialog) {
+            if (isNative && window.tumAPI && window.tumAPI.openFolderDialog) {
                 selected = await window.tumAPI.openFolderDialog();
             } else {
                 selected = prompt('Enter absolute folder path to open:', currentWorkspaceDir);
@@ -475,9 +506,25 @@ Type any PowerShell/Bash command below:</div>
             const folderName = currentWorkspaceDir.split('/').filter(Boolean).pop() || currentWorkspaceDir;
             document.getElementById('sidebarHeaderTitle').textContent = 'Explorer: ' + folderName;
             document.getElementById('currentWorkspacePill').textContent = folderName;
-            document.getElementById('currentBreadcrumb').textContent = 'root';
             showToast(`📂 Opened folder: ${folderName}`);
+
+            // Ensure explorer tab is selected
+            document.querySelectorAll('.activity-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.activity-btn[title="File Explorer"]')?.classList.add('active');
+
             await loadRealFileTree(currentWorkspaceDir);
+
+            // Open primary or first file
+            const fileToOpen = findPrimaryFile(currentTreeCache) || findFirstFile(currentTreeCache);
+            if (fileToOpen) {
+                await readRealFile(fileToOpen.path);
+            } else {
+                if (monacoInstance) {
+                    monacoInstance.setValue(`// Workspace: ${currentWorkspaceDir}\n// (No files opened yet. Click any file in the Explorer to edit.)\n`);
+                }
+                document.getElementById('tabFileName').textContent = 'Workspace';
+                document.getElementById('currentBreadcrumb').textContent = 'root';
+            }
 
             const out = document.getElementById('terminalOutput');
             out.innerHTML += `\n<span style="color: var(--secondary); font-weight: 700;">[WORKSPACE CHANGED]:</span> Now rooted in <strong style="color: #fff;">${currentWorkspaceDir}</strong>\n`;
@@ -536,6 +583,18 @@ Type any PowerShell/Bash command below:</div>
         function renderFileTree(tree) {
             const container = document.getElementById('sidebarContent');
             container.innerHTML = '';
+            currentTreeCache = tree || [];
+
+            if (!tree || tree.length === 0) {
+                container.innerHTML = `
+                    <div style="padding: 24px 14px; color: var(--text-dim); font-size: 11px; font-family: var(--font-code); text-align: center;">
+                        <div style="font-size: 26px; margin-bottom: 8px;">📂</div>
+                        <div style="color: #fff; font-weight: 700; margin-bottom: 4px;">Empty Folder</div>
+                        <div>No files found in workspace</div>
+                    </div>
+                `;
+                return;
+            }
 
             function walk(items, parentEl, level = 0) {
                 for (const item of items) {

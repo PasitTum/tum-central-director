@@ -71,7 +71,9 @@ function createWindow() {
     icon: path.join(__dirname, '..', '..', 'resources', 'icon.ico'),
     autoHideMenuBar: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: fsSync.existsSync(path.join(__dirname, 'preload.cjs'))
+        ? path.join(__dirname, 'preload.cjs')
+        : path.join(__dirname, '..', '..', 'src', 'main', 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false

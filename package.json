@@ -19,7 +19,7 @@
     "dev:cli": "tsx src/cli/index.ts",
     "mcp": "tsx src/mcp/index.ts",
     "harness": "tsx src/harness/index.ts",
-    "build": "tsc && node -e \"const fs = require('fs'); fs.mkdirSync('dist/renderer', {recursive: true}); fs.copyFileSync('src/renderer/index.html', 'dist/renderer/index.html');\"",
+    "build": "tsc && node -e \"const fs = require('fs'); fs.mkdirSync('dist/renderer', {recursive: true}); fs.copyFileSync('src/renderer/index.html', 'dist/renderer/index.html'); fs.copyFileSync('src/main/preload.cjs', 'dist/main/preload.cjs');\"",
     "test": "tsx --test tests/**/*.test.ts",
     "lint": "tsc --noEmit"
   },
