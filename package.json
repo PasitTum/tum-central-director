@@ -1,0 +1,50 @@
+{
+  "name": "tum-sovereign-agent-ide",
+  "version": "1.0.0",
+  "description": "TUM Sovereign Agent IDE — Enterprise Autonomous Agent Platform",
+  "type": "module",
+  "main": "dist/main/electron-main.js",
+  "bin": {
+    "tum": "./dist/cli/index.js",
+    "director": "./dist/cli/index.js",
+    "tum-mcp": "./dist/mcp/index.js"
+  },
+  "scripts": {
+    "app": "electron .",
+    "desktop": "electron .",
+    "dev": "electron .",
+    "start": "electron .",
+    "web": "tsx src/cli/index.ts dev",
+    "cli": "tsx src/cli/index.ts",
+    "dev:cli": "tsx src/cli/index.ts",
+    "mcp": "tsx src/mcp/index.ts",
+    "harness": "tsx src/harness/index.ts",
+    "build": "tsc && node -e \"const fs = require('fs'); fs.mkdirSync('dist/renderer', {recursive: true}); fs.copyFileSync('src/renderer/index.html', 'dist/renderer/index.html');\"",
+    "test": "tsx --test tests/**/*.test.ts",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "agentic",
+    "ai",
+    "orca",
+    "ide",
+    "worktree",
+    "sovereign",
+    "pqc",
+    "sentinel"
+  ],
+  "author": "Central Director Team <daywakler01@gmail.com>",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "electron": "^45.2.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2"
+  }
+}
