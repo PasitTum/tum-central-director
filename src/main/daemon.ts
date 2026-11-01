@@ -20,17 +20,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const DEFAULT_PORT = 5432;
-export const WORKSPACE_ROOT = 'D:/TUM';
+export const WORKSPACE_ROOT = process.env.TUM_ROOT || 'D:/TUM';
 
 const DEFAULT_REPOS = [
-  { id: 'director', name: 'tum-central-director', path: 'D:/TUM/tum-central-director' },
-  { id: 'trust', name: 'tum-trust-security', path: 'D:/TUM/tum-trust-security' },
-  { id: 'socs', name: 'tum-socs', path: 'D:/TUM/tum-socs' },
-  { id: 'quantum', name: 'tum-quantum', path: 'D:/TUM/tum-quantum' },
-  { id: 'holdings', name: 'tum-group-holdings', path: 'D:/TUM/tum-group-holdings' },
-  { id: 'workos', name: 'tum-agentic-workos', path: 'D:/TUM/tum-agentic-workos' },
-  { id: 'cybermesh', name: 'tum-cybermesh', path: 'D:/TUM/tum-cybermesh' },
-  { id: 'trustfabric', name: 'tum-trust-fabric', path: 'D:/TUM/tum-trust-fabric' }
+  { id: 'director', name: 'tum-central-director', path: path.join(WORKSPACE_ROOT, 'tum-central-director') },
+  { id: 'trust', name: 'tum-trust-security', path: path.join(WORKSPACE_ROOT, 'tum-trust-security') },
+  { id: 'socs', name: 'tum-socs', path: path.join(WORKSPACE_ROOT, 'tum-socs') },
+  { id: 'quantum', name: 'tum-quantum', path: path.join(WORKSPACE_ROOT, 'tum-quantum') },
+  { id: 'holdings', name: 'tum-group-holdings', path: path.join(WORKSPACE_ROOT, 'tum-group-holdings') },
+  { id: 'workos', name: 'tum-agentic-workos', path: path.join(WORKSPACE_ROOT, 'tum-agentic-workos') },
+  { id: 'cybermesh', name: 'tum-cybermesh', path: path.join(WORKSPACE_ROOT, 'tum-cybermesh') },
+  { id: 'trustfabric', name: 'tum-trust-fabric', path: path.join(WORKSPACE_ROOT, 'tum-trust-fabric') }
 ];
 
 function sendJson(res: http.ServerResponse, statusCode: number, data: any) {
@@ -334,3 +334,12 @@ export function startDaemon(port = DEFAULT_PORT): Promise<number> {
     });
   });
 }
+
+// Standalone execution mode
+if (process.argv[1]?.endsWith('daemon.ts') || process.argv[1]?.endsWith('daemon.js')) {
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : DEFAULT_PORT;
+  startDaemon(port).then(p => {
+    console.log(`[TUM-Central-Director] Sovereign Daemon listening on port ${p}`);
+  });
+}
+
