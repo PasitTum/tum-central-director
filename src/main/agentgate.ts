@@ -142,4 +142,18 @@ export class AgentGateEngine {
     this.revokedTokens.clear();
     this.activeCredentials.clear();
   }
+
+  public static mint(options: MintDacOptions): DelegatedAgentCredential {
+    return this.mintCredential(options);
+  }
+
+  public static verify(tokenId: string) {
+    return this.verifyCredential(tokenId);
+  }
+
+  public static revoke(tokenId: string, _reason?: string) {
+    return this.revokeCredential(tokenId);
+  }
 }
+
+export const AgentGate = AgentGateEngine;

@@ -10,7 +10,8 @@ export type FleetTopic =
   | 'WORKOS_TREASURY_CRUNCH'
   | 'TRUST_FABRIC_CITIZEN_CLEARED'
   | 'QUANTUM_KEY_ROTATED'
-  | 'DIRECTOR_POLICY_ENFORCED';
+  | 'DIRECTOR_POLICY_ENFORCED'
+  | 'DIRECTOR_PLAYBOOK_EXECUTED';
 
 export interface FleetEvent<T = Record<string, unknown>> {
   readonly id: string;

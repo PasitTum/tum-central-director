@@ -36,5 +36,17 @@ contextBridge.exposeInMainWorld('tumAPI', {
 
   // Real System-Level AI Copilot
   sendCopilotChat: (message: string, persona: string, workspace?: string) =>
-    ipcRenderer.invoke('copilot:chat', message, persona, workspace)
+    ipcRenderer.invoke('copilot:chat', message, persona, workspace),
+
+  // Multi-Tenant RBAC
+  listTenants: () => ipcRenderer.invoke('tenants:list'),
+
+  // One-Click Executive Audit Report
+  generateReport: (options: any) => ipcRenderer.invoke('reports:generate', options),
+
+  // Real-Time Alert Thresholds & Webhooks
+  configureAlerts: (tenantId: string, config: any) => ipcRenderer.invoke('alerts:configure', tenantId, config),
+  testAlert: (tenantId: string, channel: string) => ipcRenderer.invoke('alerts:test', tenantId, channel),
+  getAlertHistory: (limit?: number) => ipcRenderer.invoke('alerts:history', limit),
+  getAlertConfig: (tenantId: string) => ipcRenderer.invoke('alerts:config', tenantId)
 });
