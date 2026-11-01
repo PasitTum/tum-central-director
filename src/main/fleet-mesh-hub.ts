@@ -45,10 +45,10 @@ export class FleetMeshHub {
     { id: 'trust', name: 'tum-trust-security', category: 'SECURITY', path: 'D:/TUM/tum-trust-security', quantumTier: 'PKCS#11 / Hardware HAL', knownTestCount: 159 },
     { id: 'quantum', name: 'tum-quantum', category: 'CRYPTOGRAPHY', path: 'D:/TUM/tum-quantum', quantumTier: 'NIST FIPS 203 ML-KEM / FIPS 204 ML-DSA', knownTestCount: 42 },
     { id: 'socs', name: 'tum-socs', category: 'DEFENSE', path: 'D:/TUM/tum-socs', quantumTier: 'OpenSIEM .NET 8 / Sigma Defense', knownTestCount: 58 },
-    { id: 'director', name: 'tum-central-director', category: 'DEFENSE', path: 'D:/TUM/tum-central-director', quantumTier: 'Sovereign AgentOS / Sentinel', knownTestCount: 34 },
-    { id: 'workos', name: 'tum-agentic-workos', category: 'WORKFORCE', path: 'D:/TUM/tum-agentic-workos', quantumTier: 'NIST FIPS 204 ML-DSA-65 / Treasury Forecast', knownTestCount: 45 },
-    { id: 'cybermesh', name: 'tum-cybermesh', category: 'DEFENSE', path: 'D:/TUM/tum-cybermesh', quantumTier: 'NIST FIPS 204 ML-DSA-65 / SOAR Playbook', knownTestCount: 33 },
-    { id: 'trustfabric', name: 'tum-trust-fabric', category: 'IDENTITY', path: 'D:/TUM/tum-trust-fabric', quantumTier: 'NIST FIPS 204 ML-DSA-87 / Legal Notary', knownTestCount: 51 }
+    { id: 'director', name: 'tum-central-director', category: 'DEFENSE', path: 'D:/TUM/tum-central-director', quantumTier: 'Sovereign AgentOS / Event Mesh', knownTestCount: 38 },
+    { id: 'workos', name: 'tum-agentic-workos', category: 'WORKFORCE', path: 'D:/TUM/tum-agentic-workos', quantumTier: 'NIST FIPS 204 ML-DSA-65 / Treasury Forecast', knownTestCount: 47 },
+    { id: 'cybermesh', name: 'tum-cybermesh', category: 'DEFENSE', path: 'D:/TUM/tum-cybermesh', quantumTier: 'NIST FIPS 204 ML-DSA-65 / SOAR Playbook', knownTestCount: 34 },
+    { id: 'trustfabric', name: 'tum-trust-fabric', category: 'IDENTITY', path: 'D:/TUM/tum-trust-fabric', quantumTier: 'NIST FIPS 204 ML-DSA-87 / Legal Notary', knownTestCount: 53 }
   ];
 
   /**
