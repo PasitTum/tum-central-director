@@ -27,11 +27,14 @@ try {
 
 // Prevent GPU disk cache lock issues on Windows
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+app.commandLine.appendSwitch('disable-gpu-disk-cache');
 
 // Single Instance Lock: prevent lock collisions & bring existing window to front
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
+  console.log('[TUM Director] Another instance is already running. Focusing existing window.');
   app.quit();
+  process.exit(0);
 } else {
   app.on('second-instance', () => {
     if (mainWindow) {
