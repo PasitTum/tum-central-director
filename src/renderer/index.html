@@ -724,15 +724,6 @@ Type any PowerShell/Bash command below:</div>
                     });
                     data = await res.json();
                 }
-                    data = await window.tumAPI.runCommand(command);
-                } else {
-                    const res = await fetch(`${API_BASE}/api/terminal/exec`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ command })
-                    });
-                    data = await res.json();
-                }
 
                 const shieldPill = document.getElementById('sentinelShieldPill');
                 const shieldText = document.getElementById('sentinelShieldText');
