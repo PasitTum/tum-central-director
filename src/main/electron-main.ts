@@ -14,6 +14,9 @@ import { SentinelInterceptor } from './sentinel.js';
 import { AgentGateEngine } from './agentgate.js';
 import { PlatformAdapter } from './platform.js';
 import { startDaemon } from './daemon.js';
+import { TenantManager } from './tenant-manager.js';
+import { ReportGenerator } from './report-generator.js';
+import { AlertEngine } from './alert-engine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -258,6 +261,15 @@ function setupIpcHandlers() {
     const targetCwd = cwd || process.cwd();
     const verdict = SentinelInterceptor.inspect(command, 'desktop_user', targetCwd);
     if (!verdict.allowed) {
+      AlertEngine.evaluateEvent({
+        timestamp: new Date().toISOString(),
+        verdict: verdict.action,
+        threatCategory: verdict.threatCategory,
+        riskScore: verdict.riskScore,
+        detail: `Desktop terminal blocked: ${command}`,
+        attribution: verdict.attribution
+      }).catch(() => {});
+
       return {
         allowed: false,
         verdict,
@@ -338,6 +350,37 @@ function setupIpcHandlers() {
     }
 
     return { reply: aiReply, verdict };
+  });
+
+  // 10. MULTI-TENANT REGISTRY
+  ipcMain.handle('tenants:list', async () => {
+    return { tenants: TenantManager.listTenants() };
+  });
+
+  // 11. ONE-CLICK EXECUTIVE AUDIT REPORT
+  ipcMain.handle('reports:generate', async (_, options) => {
+    return ReportGenerator.generateReport(options);
+  });
+
+  // 12. ALERT THRESHOLD CONFIGURATION
+  ipcMain.handle('alerts:configure', async (_, tenantId, config) => {
+    return { success: true, config: AlertEngine.configureAlerts(tenantId, config) };
+  });
+
+  // 13. TEST ALERT DISPATCH
+  ipcMain.handle('alerts:test', async (_, tenantId, channel) => {
+    const dispatch = await AlertEngine.testWebhook(tenantId, channel);
+    return { success: true, dispatch };
+  });
+
+  // 14. ALERT DISPATCH HISTORY
+  ipcMain.handle('alerts:history', async (_, limit = 30) => {
+    return { history: AlertEngine.getDispatchHistory(limit) };
+  });
+
+  // 15. GET ALERT CONFIGURATION
+  ipcMain.handle('alerts:config', async (_, tenantId) => {
+    return { config: AlertEngine.getAlertConfig(tenantId) };
   });
 }
 
