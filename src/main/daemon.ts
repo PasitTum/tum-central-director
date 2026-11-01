@@ -230,13 +230,14 @@ export function createDaemonServer(): http.Server {
       // 10. REAL AI COPILOT CHAT (POWERED BY NATIVE AGENT API / AGY)
       if (pathname === '/api/copilot/chat' && req.method === 'POST') {
         const body = await parseBody(req);
-        const { message, persona } = body;
+        const { message, persona, workspace } = body;
         if (!message) return sendJson(res, 400, { error: 'message is required' });
 
         const promptText = message.trim();
+        const targetCwd = workspace || process.cwd();
 
         // 1. Check with Sentinel for prompt injection
-        const verdict = SentinelInterceptor.inspect(promptText, 'copilot_user', process.cwd());
+        const verdict = SentinelInterceptor.inspect(promptText, 'copilot_user', targetCwd);
         if (!verdict.allowed) {
           return sendJson(res, 200, {
             reply: `🚨 [BLOCKED BY SENTINEL]: Your prompt was flagged as ${verdict.threatCategory} (Risk Score: ${verdict.riskScore}/100 - ${verdict.matchedRule}). Action: ${verdict.action}.`,
@@ -256,8 +257,8 @@ export function createDaemonServer(): http.Server {
               ? 'You are the TUM Coder (TDD Harness). Provide clean, type-safe code snippets and tests.'
               : 'You are the TUM Sentinel Security Auditor. Evaluate security posture and risks.');
 
-          const fullPrompt = `${systemContext}\nUser: ${promptText}\nReply concisely:`;
-          const runRes = await ProcessRunner.executeArgs(agyPath, ['-p', fullPrompt], process.cwd(), 35000);
+          const fullPrompt = `${systemContext}\nWorkspace: ${targetCwd}\nUser: ${promptText}\nReply concisely:`;
+          const runRes = await ProcessRunner.executeArgs(agyPath, ['-p', fullPrompt], targetCwd, 35000);
 
           if (runRes.stdout && runRes.stdout.trim()) {
             aiReply = runRes.stdout.trim();

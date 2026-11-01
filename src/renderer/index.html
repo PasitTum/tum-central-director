@@ -265,11 +265,16 @@
                 <span>Native Connected</span>
             </div>
             <div class="top-breadcrumbs">
-                <span>D:</span> / <span>TUM</span> / <span>tum-central-director</span> / <span id="currentBreadcrumb" style="color: #fff;">package.json</span>
+                <span>📁 Workspace:</span> <strong id="currentWorkspacePill" style="color: #fff; margin-left: 2px;">tum-central-director</strong>
+                <span style="color: var(--text-dim); margin: 0 4px;">/</span>
+                <span id="currentBreadcrumb" style="color: var(--primary);">package.json</span>
             </div>
         </div>
 
         <div class="titlebar-actions">
+            <button class="btn-mini btn-secondary" onclick="openFolderPrompt()" title="Open any folder on this PC (Ctrl+O)" style="display: flex; align-items: center; gap: 5px;">
+                <span>📂</span> Open Folder...
+            </button>
             <div class="status-pill" id="sentinelShieldPill">
                 <div class="pulse-dot"></div>
                 <span id="sentinelShieldText">SENTINEL: ARMED (0/100)</span>
@@ -302,7 +307,10 @@
         <div class="sidebar">
             <div class="sidebar-header">
                 <span id="sidebarHeaderTitle">Explorer: tum-central-director</span>
-                <span style="cursor: pointer;" title="Refresh" onclick="loadRealFileTree()">🔄</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span style="cursor: pointer; font-size: 13px;" title="Open Folder..." onclick="openFolderPrompt()">📂</span>
+                    <span style="cursor: pointer; font-size: 13px;" title="Refresh" onclick="loadRealFileTree()">🔄</span>
+                </div>
             </div>
             <div class="sidebar-content" id="sidebarContent">
                 <div style="padding: 16px; color: var(--text-dim); font-size: 12px;">Loading real file tree...</div>
@@ -418,6 +426,7 @@ Type any PowerShell/Bash command below:</div>
     <!-- SCRIPT ENGINE -->
     <script>
         let monacoInstance = null;
+        let currentWorkspaceDir = 'D:/TUM/tum-central-director';
         let currentLoadedPath = 'D:/TUM/tum-central-director/package.json';
         const API_BASE = window.location.origin;
         const isNative = typeof window.tumAPI !== 'undefined';
@@ -433,7 +442,7 @@ Type any PowerShell/Bash command below:</div>
         // INITIALIZE ON LOAD
         window.addEventListener('load', () => {
             initMonacoEditor();
-            loadRealFileTree();
+            loadRealFileTree(currentWorkspaceDir);
             loadRealAuditLog();
 
             // Native Electron Menu Listeners
@@ -441,7 +450,39 @@ Type any PowerShell/Bash command below:</div>
                 window.ipcRenderer.on('menu:save', () => saveCurrentFile());
                 window.ipcRenderer.on('nav:audit', () => switchBottomPanel('audit'));
             }
+            if (isNative && window.tumAPI.onWorkspaceOpened) {
+                window.tumAPI.onWorkspaceOpened((newDir) => {
+                    switchWorkspace(newDir);
+                });
+            }
         });
+
+        // OPEN FOLDER PROMPT (NATIVE DIALOG / WEB FALLBACK)
+        async function openFolderPrompt() {
+            let selected = null;
+            if (isNative && window.tumAPI.openFolderDialog) {
+                selected = await window.tumAPI.openFolderDialog();
+            } else {
+                selected = prompt('Enter absolute folder path to open:', currentWorkspaceDir);
+            }
+            if (selected) {
+                await switchWorkspace(selected);
+            }
+        }
+
+        async function switchWorkspace(newDir) {
+            currentWorkspaceDir = newDir.replace(/\\/g, '/');
+            const folderName = currentWorkspaceDir.split('/').filter(Boolean).pop() || currentWorkspaceDir;
+            document.getElementById('sidebarHeaderTitle').textContent = 'Explorer: ' + folderName;
+            document.getElementById('currentWorkspacePill').textContent = folderName;
+            document.getElementById('currentBreadcrumb').textContent = 'root';
+            showToast(`📂 Opened folder: ${folderName}`);
+            await loadRealFileTree(currentWorkspaceDir);
+
+            const out = document.getElementById('terminalOutput');
+            out.innerHTML += `\n<span style="color: var(--secondary); font-weight: 700;">[WORKSPACE CHANGED]:</span> Now rooted in <strong style="color: #fff;">${currentWorkspaceDir}</strong>\n`;
+            out.parentElement.scrollTop = out.parentElement.scrollHeight;
+        }
 
         // INIT MONACO
         function initMonacoEditor() {
@@ -474,16 +515,19 @@ Type any PowerShell/Bash command below:</div>
         }
 
         // REAL FILE SYSTEM TREE (NATIVE IPC + HTTP FALLBACK)
-        async function loadRealFileTree() {
+        async function loadRealFileTree(targetDir) {
+            const dir = targetDir || currentWorkspaceDir;
             try {
                 let data;
                 if (isNative) {
-                    data = await window.tumAPI.getFileTree();
+                    data = await window.tumAPI.getFileTree(dir);
                 } else {
-                    const res = await fetch(`${API_BASE}/api/fs/tree`);
+                    const res = await fetch(`${API_BASE}/api/fs/tree?dir=${encodeURIComponent(dir)}`);
                     data = await res.json();
                 }
-                renderFileTree(data.tree);
+                if (data && data.tree) {
+                    renderFileTree(data.tree);
+                }
             } catch (err) {
                 console.error('Failed to load file tree:', err);
             }
@@ -522,9 +566,13 @@ Type any PowerShell/Bash command below:</div>
 
         // REAL FILE READ (NATIVE IPC + HTTP FALLBACK)
         async function readRealFile(filePath) {
-            currentLoadedPath = filePath;
-            const fileName = filePath.split('/').pop() || filePath;
-            document.getElementById('currentBreadcrumb').textContent = filePath.replace('D:/TUM/', '');
+            currentLoadedPath = filePath.replace(/\\/g, '/');
+            const fileName = currentLoadedPath.split('/').pop() || currentLoadedPath;
+            let rel = currentLoadedPath;
+            if (rel.startsWith(currentWorkspaceDir)) {
+                rel = rel.substring(currentWorkspaceDir.length + 1);
+            }
+            document.getElementById('currentBreadcrumb').textContent = rel;
             document.getElementById('tabFileName').textContent = fileName;
 
             try {
@@ -579,11 +627,15 @@ Type any PowerShell/Bash command below:</div>
             }
         }
 
-        // KEYBOARD SHORTCUT: Ctrl+S
+        // KEYBOARD SHORTCUT: Ctrl+S (Save), Ctrl+O (Open Folder)
         window.addEventListener('keydown', e => {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();
                 saveCurrentFile();
+            }
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'o' || e.key === 'O')) {
+                e.preventDefault();
+                openFolderPrompt();
             }
         });
 
@@ -604,6 +656,15 @@ Type any PowerShell/Bash command below:</div>
             try {
                 let data;
                 if (isNative) {
+                    data = await window.tumAPI.runCommand(command, currentWorkspaceDir);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/terminal/exec`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ command, cwd: currentWorkspaceDir })
+                    });
+                    data = await res.json();
+                }
                     data = await window.tumAPI.runCommand(command);
                 } else {
                     const res = await fetch(`${API_BASE}/api/terminal/exec`, {
@@ -831,12 +892,12 @@ Type any PowerShell/Bash command below:</div>
             try {
                 let data;
                 if (isNative) {
-                    data = await window.tumAPI.sendCopilotChat(text, persona);
+                    data = await window.tumAPI.sendCopilotChat(text, persona, currentWorkspaceDir);
                 } else {
                     const res = await fetch(`${API_BASE}/api/copilot/chat`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: text, persona })
+                        body: JSON.stringify({ message: text, persona, workspace: currentWorkspaceDir })
                     });
                     data = await res.json();
                 }
@@ -864,12 +925,12 @@ Type any PowerShell/Bash command below:</div>
                 let data;
                 const prompt = 'Analyze current workspace and decompose into 4 parallel worktree engineering tasks for Frontend Kiosk, Trust Security HAL, Quantum ML-DSA, and Socs Telemetry.';
                 if (isNative) {
-                    data = await window.tumAPI.sendCopilotChat(prompt, 'architect');
+                    data = await window.tumAPI.sendCopilotChat(prompt, 'architect', currentWorkspaceDir);
                 } else {
                     const res = await fetch(`${API_BASE}/api/copilot/chat`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: prompt, persona: 'architect' })
+                        body: JSON.stringify({ message: prompt, persona: 'architect', workspace: currentWorkspaceDir })
                     });
                     data = await res.json();
                 }

@@ -3,7 +3,7 @@
  * Full parity with Orca ADE Desktop architecture (Windows, macOS, Linux).
  */
 
-import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, shell, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
 import fsSync from 'fs';
@@ -94,11 +94,33 @@ function createWindow() {
   }
   mainWindow.loadFile(rendererPath);
 
+  mainWindow.webContents.on('did-finish-load', () => {
+    const cliFolder = process.argv.slice(2).find(arg => !arg.startsWith('-') && fsSync.existsSync(arg) && fsSync.statSync(arg).isDirectory());
+    if (cliFolder) {
+      mainWindow?.webContents.send('workspace:opened', PlatformAdapter.normalizePath(path.resolve(cliFolder)));
+    }
+  });
+
   // Setup Application Menu
   const menuTemplate: any[] = [
     {
       label: 'File',
       submenu: [
+        {
+          label: 'Open Folder...',
+          accelerator: 'CmdOrCtrl+O',
+          click: async () => {
+            if (!mainWindow) return;
+            const res = await dialog.showOpenDialog(mainWindow, {
+              title: 'Open Project Folder',
+              properties: ['openDirectory']
+            });
+            if (!res.canceled && res.filePaths.length > 0) {
+              const selectedDir = PlatformAdapter.normalizePath(res.filePaths[0]);
+              mainWindow.webContents.send('workspace:opened', selectedDir);
+            }
+          }
+        },
         { label: 'Save', accelerator: 'CmdOrCtrl+S', click: () => mainWindow?.webContents.send('menu:save') },
         { type: 'separator' },
         { label: 'Exit', role: 'quit' }
@@ -152,6 +174,19 @@ function createWindow() {
 
 // SETUP NATIVE IPC HANDLERS
 function setupIpcHandlers() {
+  // 0. NATIVE FOLDER PICKER
+  ipcMain.handle('dialog:openFolder', async () => {
+    if (!mainWindow) return null;
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select Project Folder',
+      properties: ['openDirectory']
+    });
+    if (res.canceled || !res.filePaths || res.filePaths.length === 0) {
+      return null;
+    }
+    return PlatformAdapter.normalizePath(res.filePaths[0]);
+  });
+
   // 1. REAL FILE SYSTEM TREE
   ipcMain.handle('fs:tree', async (_, dir) => {
     const targetDir = dir || process.cwd();
@@ -229,9 +264,10 @@ function setupIpcHandlers() {
   });
 
   // 9. REAL SYSTEM-LEVEL AI COPILOT
-  ipcMain.handle('copilot:chat', async (_, message, persona) => {
+  ipcMain.handle('copilot:chat', async (_, message, persona, workspace) => {
     const promptText = message.trim();
-    const verdict = SentinelInterceptor.inspect(promptText, 'copilot_user', process.cwd());
+    const targetCwd = workspace || process.cwd();
+    const verdict = SentinelInterceptor.inspect(promptText, 'copilot_user', targetCwd);
     if (!verdict.allowed) {
       return {
         reply: `🚨 [BLOCKED BY SENTINEL]: Your prompt was flagged as ${verdict.threatCategory} (Risk Score: ${verdict.riskScore}/100 - ${verdict.matchedRule}). Action: ${verdict.action}.`,
@@ -249,8 +285,8 @@ function setupIpcHandlers() {
           ? 'You are the TUM Coder (TDD Harness). Provide clean, type-safe code snippets and tests.'
           : 'You are the TUM Sentinel Security Auditor. Evaluate security posture and risks.');
 
-      const fullPrompt = `${systemContext}\nUser: ${promptText}\nReply concisely:`;
-      const runRes = await ProcessRunner.executeArgs(agyPath, ['-p', fullPrompt], process.cwd(), 35000);
+      const fullPrompt = `${systemContext}\nWorkspace: ${targetCwd}\nUser: ${promptText}\nReply concisely:`;
+      const runRes = await ProcessRunner.executeArgs(agyPath, ['-p', fullPrompt], targetCwd, 35000);
 
       if (runRes.stdout && runRes.stdout.trim()) {
         aiReply = runRes.stdout.trim();

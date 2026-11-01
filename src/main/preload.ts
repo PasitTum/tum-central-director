@@ -12,6 +12,10 @@ contextBridge.exposeInMainWorld('tumAPI', {
   getFileTree: (dir?: string) => ipcRenderer.invoke('fs:tree', dir),
   readFile: (filePath: string) => ipcRenderer.invoke('fs:read', filePath),
   writeFile: (filePath: string, content: string) => ipcRenderer.invoke('fs:write', filePath, content),
+  openFolderDialog: () => ipcRenderer.invoke('dialog:openFolder'),
+  onWorkspaceOpened: (callback: (dir: string) => void) => {
+    ipcRenderer.on('workspace:opened', (_, dir) => callback(dir));
+  },
 
   // Real Terminal Execution (Guarded by Sentinel)
   runCommand: (command: string, cwd?: string) => ipcRenderer.invoke('terminal:exec', command, cwd),
@@ -31,6 +35,6 @@ contextBridge.exposeInMainWorld('tumAPI', {
   getAuditLog: (limit?: number) => ipcRenderer.invoke('sentinel:audit', limit),
 
   // Real System-Level AI Copilot
-  sendCopilotChat: (message: string, persona: string) =>
-    ipcRenderer.invoke('copilot:chat', message, persona)
+  sendCopilotChat: (message: string, persona: string, workspace?: string) =>
+    ipcRenderer.invoke('copilot:chat', message, persona, workspace)
 });
