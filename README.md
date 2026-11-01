@@ -1,24 +1,42 @@
-# 04_Central_Director — Executive Visualization & Multi-Tenant Products
+# 04_Central_Director — TUM Sovereign AgentOS
 ## ฝ่ายบริหารผลิตภัณฑ์ส่วนกลาง (Central Director Team)
 
-> **คำขวัญ:** *"Single Pane of Glass, Real-Time Executive HUD & Board Decision Map"*  
-> **สถานะ:** Active Central Delivery Team 🟢  
-> **ผู้รับผิดชอบหลัก:** Central Product Director & Lead Frontend Architect
+> **คำขวัญ:** *"From Deep-Tech Engines to Turnkey Sovereign Agentic AI"*  
+> **สถานะ:** Active Production Flagship 🟢  
+> **ผลิตภัณฑ์เรือธง:** **TUM Sovereign AgentOS** (The World's First Enterprise Sovereign Agentic Platform)  
+> **ขึ้นตรงต่อ:** ท่านประธานกรรมการบริหาร (Chairman Pasit) & สำนักประธานเจ้าหน้าที่บริหาร (CEO)
 
 ---
 
-## 1. ขอบเขตและหน้าที่ความรับผิดชอบ (Team Scope)
+## 1. ผลิตภัณฑ์เรือธง: TUM Sovereign AgentOS
 
-**Central Director Team** คือทีมส่วนกลางที่ขึ้นตรงต่อท่าน CEO มีหน้าที่รวบรวมข้อมูลเชิงลึกจากทั้ง 3 บริษัทย่อย มานำเสนอในรูปแบบภาพเสมือนจริงที่เข้าใจง่ายสำหรับผู้บริหารและคณะกรรมการ:
+ต่อยอดจากความสำเร็จของเครื่องมือยุค Agentic Engineering อย่าง **Orca** (Agent Development Environment) และ **ECC** (Agentic Engineering Toolkit) ผนวกเข้ากับเทคโนโลยีอธิปไตยระดับลึก (Sovereign Deep-Tech) ของเครือ TUM Group สู่แพลตฟอร์มบริหารจัดการและควบคุมกองทัพปัญญาประดิษฐ์ระดับองค์กร:
 
-1. **Executive HUD & Attack Visualizer:**
-   - หน้าจอ Interactive Cyber Attack Map แสดงผลแบบ Real-time ด้วย WebGL & HTML5 Canvas
-   - ตรวจจับพิกัดการโจมตีทางไซเบอร์ที่เข้ามายังโครงข่ายของ TUM
-2. **Multi-Tenant Audit & Compliance Reporter:**
-   - รายงานสรุปสถานะความมั่นคงปลอดภัยแบบคลิกเดียว (One-Click PDF/Excel Audit Export)
-   - เชื่อมโยงข้อมูล Identity จาก Trust Security และข้อมูล Log จาก TUMSocs
-3. **Product Integration Showcase:**
-   - พอร์ทัลกลางสำหรับสาธิตผลิตภัณฑ์ทั้งหมดของกลุ่มบริษัท TUM แก่พันธมิตรและนักลงทุน
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       TUM SOVEREIGN AGENTOS ECOSYSTEM                       │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+        ┌──────────────────────────────┼──────────────────────────────┐
+        ▼                              ▼                              ▼
+┌──────────────────────┐    ┌──────────────────────┐    ┌──────────────────────┐
+│  TUM Agentic Studio  │    │ TUM Agentic Director │    │    TUM AgentGate     │
+│ (Visual Design HUD)  │    │ (Fleet Orchestration)│    │ (Sovereign Identity) │
+└──────────┬───────────┘    └──────────┬───────────┘    └──────────┬───────────┘
+           │                           │                           │
+           └───────────────────────────┼───────────────────────────┘
+                                       ▼
+                       ┌──────────────────────────────┐
+                       │    TUM AgentOps Sentinel     │
+                       │ (eBPF Telemetry & Sandboxing)│
+                       └──────────────────────────────┘
+```
+
+### 4 เสาหลักของแพลตฟอร์ม (The 4 Pillars):
+1. **🎨 TUM Agentic Studio (`agentos/`):** Visual Architecture Canvas วาดพิมพ์เขียวสถาปัตยกรรมแล้วแปลงเป็น Jira Epics และคำสั่งแจกจ่าย Agent ใน Orca Worktrees อัตโนมัติ
+2. **🕹️ TUM Agentic Director:** ระบบควบคุมกองทัพ AI Agent ควบคู่ทั้ง 5 โครงการ พร้อมกรอบวิศวกรรม ECC (*Plan $\rightarrow$ Eval $\rightarrow$ Code $\rightarrow$ Verify*)
+3. **🔐 TUM AgentGate:** ระบบออกบัตรตัวตนและมอบสิทธิ์ (Delegated Agent Credential) ผูกกับ DOPA Thai ID พร้อมลงลายมือชื่อดิจิทัลทนควอนตัม **NIST FIPS 204 ML-DSA**
+4. **🛡️ TUM AgentOps Sentinel:** เรดาร์วิเคราะห์พฤติกรรมความเสี่ยง (0-100) และระบบตัดตอนคำสั่งอันตราย (Prompt Injection / Malicious Shell) ในระดับเคอร์เนลด้วย eBPF จาก TUMSocs
 
 ---
 
@@ -26,9 +44,35 @@
 
 ```
 04_Central_Director/
-├── visualizers/
-│   └── index.html               # Interactive Cyber Attack Map & Executive HUD Visualizer
+├── agentos/
+│   └── index.html               # TUM Sovereign AgentOS — Interactive Single-Page Application
+├── bridge/
+│   └── agentos-bridge.ps1       # Local Orca CLI Runtime Bridge & Multi-Fleet Controller
 ├── docs/
-│   └── TUM_DIRECTOR_TEAM_CHARTER.md # ธรรมนูญทีม Central Director
+│   ├── TUM_SOVEREIGN_AGENTOS_BLUEPRINT.md # พิมพ์เขียวและข้อกำหนดสถาปัตยกรรมระบบ AgentOS
+│   ├── TUM_DIRECTOR_TEAM_CHARTER.md       # ธรรมนูญทีม Central Director
+│   └── GIT_FLOW.md                        # มาตรฐานการจัดการ Git Flow
+├── visualizers/
+│   └── index.html               # Reference Executive HUD (ส่งมอบให้ TUM-Socs เรียบร้อยแล้ว)
+├── index.html                   # Root Redirect ไปยัง agentos/index.html
 └── README.md                    # เอกสารภาพรวมทีม Central Director
+```
+
+---
+
+## 3. วิธีการเปิดใช้งาน (Quickstart)
+
+### เปิดใช้งานผ่าน Web Browser:
+เปิดไฟล์ [agentos/index.html](file:///D:/TUM/tum-central-director/agentos/index.html) ในเบราว์เซอร์ เพื่อเข้าสู่หน้าจอ **War Room HUD, Studio Canvas, Fleet Director, AgentGate, และ Sentinel Defense** ได้ทันทีโดยไม่ต้องติดตั้งเซิร์ฟเวอร์ภายนอก
+
+### เชื่อมต่อกับ Orca Runtime บนเครื่อง:
+```powershell
+# ตรวจสอบสถานะการเชื่อมต่อกับ Orca Worktrees
+powershell -ExecutionPolicy Bypass -File bridge/agentos-bridge.ps1 -Action status
+
+# ดูรายการ Terminal ของ Agent ทั้งหมดที่กำลังรันอยู่ใน Orca
+powershell -ExecutionPolicy Bypass -File bridge/agentos-bridge.ps1 -Action list-terminals
+
+# สั่งรันชุดทดสอบความปลอดภัยและการทำงานของระบบทั้งหมด
+powershell -ExecutionPolicy Bypass -File bridge/agentos-bridge.ps1 -Action eval
 ```

