@@ -10,10 +10,10 @@
     "tum-mcp": "./dist/mcp/index.js"
   },
   "scripts": {
-    "app": "electron .",
-    "desktop": "electron .",
-    "dev": "electron .",
-    "start": "electron .",
+    "app": "npm run build && electron .",
+    "desktop": "npm run build && electron .",
+    "dev": "npm run build && electron .",
+    "start": "npm run build && electron .",
     "web": "tsx src/cli/index.ts dev",
     "cli": "tsx src/cli/index.ts",
     "dev:cli": "tsx src/cli/index.ts",
