@@ -877,7 +877,8 @@ Type any PowerShell/Bash command below:</div>
         // SIDEBAR TAB SWITCHING
         async function selectSidebarTab(tab) {
             document.querySelectorAll('.activity-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            const btn = document.querySelector(`.activity-btn[onclick*="${tab}"]`);
+            if (btn) btn.classList.add('active');
 
             const content = document.getElementById('sidebarContent');
             const title = document.getElementById('sidebarHeaderTitle');
