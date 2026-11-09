@@ -87,6 +87,7 @@ export interface AuditEvent {
   worktree?: string;
   actionType?: 'WORKTREE_OP' | 'COMMAND_EXECUTION' | 'DAC_MINT' | 'DAC_REVOKE' | 'THREAT_BLOCKED';
   detail: string;
+  command?: string;
   riskScore: number;
   verdict: string;
   threatCategory?: string;

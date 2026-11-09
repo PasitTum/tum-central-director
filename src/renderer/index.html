@@ -3,37 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TUM Sovereign Agent IDE — Enterprise Autonomous Workspace</title>
+    <title>TUM Sovereign Agent IDE : Enterprise Autonomous Workspace</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:ital,wght@0,400..700;1,400..700&family=Host+Grotesk:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
     
     <!-- Microsoft Monaco Editor Loader -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
 
     <style>
+/* Hallmark · shape: workbench · genre: modern-minimal · theme: Console */
         :root {
-            --bg-base: #060810;
-            --bg-sidebar: #0a0d18;
-            --bg-panel: #0d1222;
-            --bg-editor: #090c17;
-            --border: rgba(255, 255, 255, 0.08);
-            --border-highlight: rgba(56, 189, 248, 0.35);
+            --bg-base: oklch(17% 0.008 250);
+            --bg-sidebar: oklch(14% 0.007 250);
+            --bg-panel: oklch(21% 0.009 250);
+            --bg-editor: oklch(13.5% 0.007 250);
+            --border: oklch(31% 0.01 250);
+            --border-highlight: oklch(42% 0.012 250);
             
-            --primary: #38bdf8;
-            --primary-glow: rgba(56, 189, 248, 0.25);
-            --secondary: #818cf8;
-            --accent: #c084fc;
-            --emerald: #34d399;
-            --rose: #fb7185;
-            --amber: #fbbf24;
+            --primary: oklch(82% 0.15 80);
+            --primary-glow: transparent;
+            --secondary: oklch(77% 0.12 245);
+            --accent: oklch(82% 0.15 80);
+            --emerald: oklch(76% 0.15 150);
+            --rose: oklch(70% 0.17 25);
+            --amber: oklch(82% 0.15 80);
             
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --text-dim: #64748b;
+            --text-main: oklch(95% 0.005 250);
+            --text-muted: oklch(71% 0.01 250);
+            --text-dim: oklch(50% 0.01 250);
             
-            --font-main: 'Plus Jakarta Sans', 'Sarabun', sans-serif;
-            --font-code: 'JetBrains Mono', monospace;
+            --font-main: 'Host Grotesk', -apple-system, sans-serif;
+            --font-code: 'Atkinson Hyperlegible Mono', monospace;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -78,7 +79,7 @@
         .status-pill.danger {
             background: rgba(251, 113, 133, 0.1); border-color: rgba(251, 113, 133, 0.3); color: var(--rose);
         }
-        .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; }
+        .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor;  }
 
         /* WORKSPACE BODY */
         .workspace-body { flex: 1; display: flex; overflow: hidden; position: relative; }
