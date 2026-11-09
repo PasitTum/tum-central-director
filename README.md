@@ -76,3 +76,21 @@ powershell -ExecutionPolicy Bypass -File bridge/agentos-bridge.ps1 -Action list-
 # สั่งรันชุดทดสอบความปลอดภัยและการทำงานของระบบทั้งหมด
 powershell -ExecutionPolicy Bypass -File bridge/agentos-bridge.ps1 -Action eval
 ```
+
+
+---
+
+## 3. Commercial Turnkey Packaging (`D:\TUM\setup-product\tum-central-director`)
+
+ฝ่ายบริหารผลิตภัณฑ์ส่วนกลางได้จัดส่งมอบแอปพลิเคชัน Desktop สำหรับผู้ปฏิบัติงานระดับผู้บังคับการกองทัพ AI (Fleet Commander):
+
+- **`desktop-app/TUM-Central-Director.exe`**: Standalone Windows Electron Application (238 MB) รวม Embedded Node.js, V8 Runtime, Chromium GUI, และ Web HUD
+- **Launchers**:
+  - `launch-desktop.cmd`: สคริปต์คลิกเดียวสำหรับ Windows Command Prompt
+  - `launch-desktop.ps1`: สคริปต์คลิกเดียวสำหรับ PowerShell
+- **`smoke-test.ps1`**: สคริปต์ทดสอบความสมบูรณ์ของแอปพลิเคชัน PE Header, ไวยากรณ์ Main/Preload, และ Asset Manifest
+
+### คำสั่งรัน Smoke Test:
+```powershell
+powershell -ExecutionPolicy Bypass -File D:\TUM\setup-product\tum-central-director\smoke-test.ps1
+```
